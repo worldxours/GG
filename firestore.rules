@@ -1,0 +1,72 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function isAuthed() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuthed() && request.auth.uid == uid;
+    }
+
+    // ── Users ─────────────────────────────────────────────────────────────────
+    // Any signed-in user can read any user doc (needed for display names, avatars).
+    // Only the owner can write their own doc.
+    match /users/{uid} {
+      allow read:  if isAuthed();
+      allow write: if isOwner(uid);
+
+      // ── Deposits subcollection ─────────────────────────────────────────────
+      // Owner can read/write their own deposits.
+      match /deposits/{depositId} {
+        allow read:  if isAuthed();
+        allow write: if isOwner(uid);
+      }
+    }
+
+    // ── Deposits collectionGroup ───────────────────────────────────────────
+    // Required for collectionGroup('deposits') queries in Admin transaction log.
+    // The recursive wildcard {path=**} matches deposits under any parent path.
+    match /{path=**}/deposits/{depositId} {
+      allow read: if isAuthed();
+    }
+
+    // ── Wagers ────────────────────────────────────────────────────────────────
+    // Creator or opponent can read. Either party can update (accept/decline/settle).
+    // Any authed user can create (createWager validates creator == request.auth.uid).
+    match /wagers/{wagerId} {
+      allow read:   if isAuthed() &&
+                       (resource.data.creatorId == request.auth.uid ||
+                        resource.data.opp       == request.auth.uid);
+      allow create: if isAuthed() &&
+                       request.resource.data.creatorId == request.auth.uid;
+      allow update: if isAuthed() &&
+                       (resource.data.creatorId == request.auth.uid ||
+                        resource.data.opp       == request.auth.uid);
+      allow delete: if false;
+    }
+
+    // ── H2H records ───────────────────────────────────────────────────────────
+    // Doc ID is "{uidA}_{uidB}" (sorted). Either of the two users can read/write.
+    match /h2h/{h2hId} {
+      allow read:  if isAuthed();
+      allow write: if isAuthed();
+    }
+
+    // ── Posts ─────────────────────────────────────────────────────────────────
+    // Any signed-in user can read posts (social feed).
+    // Only the author can create/update their own posts.
+    match /posts/{postId} {
+      allow read:   if isAuthed();
+      allow create: if isAuthed() &&
+                       request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthed() &&
+                       resource.data.userId == request.auth.uid;
+      allow delete: if false;
+    }
+
+  }
+}

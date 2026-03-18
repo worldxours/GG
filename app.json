@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "RunIt",
+    "slug": "runit-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0e1015"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.runit.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0e1015",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.runit.app",
+      "minSdkVersion": 24
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
