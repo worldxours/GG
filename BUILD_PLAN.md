@@ -59,7 +59,7 @@ Use the prototype as the living spec during every build phase. Open it alongside
 
 > **Expo vs Expo Go:** CometChat requires custom native modules and does not run in Expo Go. Use `eas build --profile development` to generate a development build. All development and testing happens in the development build, not Expo Go. Firebase JS SDK works fine in both Expo Go and development builds — no additional native config needed for Auth + Firestore.
 
-> **Web build:** `npm run deploy` builds the web bundle and pushes to the `gh-pages` branch. CometChat is excluded from the web bundle via Metro platform-specific files (`cometchat.native.ts` for iOS/Android, `cometchat.ts` no-op stub for web). Chat screens show a "Chat on mobile" fallback on web. GitHub Actions (`.github/workflows/deploy.yml`) auto-deploys on push to `main` — requires `EXPO_PUBLIC_*` vars as GitHub Secrets.
+> **Web build:** `npm run deploy` builds the web bundle and pushes to the `gh-pages` branch. CometChat is excluded from the web bundle via Metro platform-specific files (`cometchat.native.ts` for iOS/Android, `cometchat.ts` no-op stub for web). Chat screens show a "Chat on mobile" fallback on web. GitHub Actions (`.github/workflows/deploy.yml`) is set to `workflow_dispatch` only — **always deploy via `npm run deploy` locally** (reads keys from `.env`). Do not re-enable push trigger unless GitHub Secrets are properly configured.
 
 ---
 
@@ -199,7 +199,7 @@ comments          number
 ### Phase 1 — Auth & User Model ✅ Complete
 Reference: `screen-auth` in prototype
 
-- [x] Auth screen UI: RUNIT wordmark + tagline, email field, password field, Sign Up / Log In toggle
+- [x] Auth screen UI: GOODGAME wordmark + tagline, email field, password field, Sign Up / Log In toggle
 - [x] Sign Up: `createUserWithEmailAndPassword` — Firebase Auth
 - [x] Log In: `signInWithEmailAndPassword`
 - [x] On first signup: create `/users/{uid}` Firestore doc with all fields at defaults
@@ -219,9 +219,9 @@ Reference: `screen-auth` in prototype
 ---
 
 ### Phase 2 — Admin Interface ✅ Complete
-Reference: `screen-admin` in prototype (triple-tap RUNIT logo to access)
+Reference: `screen-admin` in prototype (triple-tap GOODGAME logo to access)
 
-- [x] Admin screen gated behind triple-tap on RUNIT wordmark
+- [x] Admin screen gated behind triple-tap on GOODGAME wordmark
 - [x] Users section: list all `/users` with `displayName` + `walletBalance`
 - [x] Fund injection bottom sheet — amount, Firestore transaction, deposit subcollection write
 - [x] Transaction Log section — `collectionGroup(db, 'deposits')`, ordered by `createdAt` desc
@@ -233,10 +233,8 @@ Reference: `screen-admin` in prototype (triple-tap RUNIT logo to access)
 
 ---
 
-### Phase 3 — Core Wager Engine + Wager Screens (~5–6 days)
+### Phase 3 — Core Wager Engine + Wager Screens ✅ Complete
 Reference: `screen-new-wager`, `screen-wagers`, `screen-chat` (settle flow) in prototype
-
-> ✅ **All Tier 2 components built.** No component work required before starting Phase 3 screens — all 7 components are in `src/components/` and exported from the barrel file.
 
 #### Components — all ready ✅
 - [x] `<ScreenHeader title onBack rightElement />` — top bar with back + title + optional right slot
@@ -247,138 +245,132 @@ Reference: `screen-new-wager`, `screen-wagers`, `screen-chat` (settle flow) in p
 - [x] `<TabSelector tabs selected onSelect scrollable />` — horizontal tab switcher, inset-on-active, generic typed
 - [x] `<WagerCard wager compact onPress />` — compact mode (list row) + full mode (pinned chat card / preview)
 
-#### New Wager Screen (`screen-new-wager`)
-- [ ] Opponent selector row: horizontal scroll of friend avatars — use `<Avatar />`
-- [ ] Category pills: Sports / Awards / Politics / Custom — use `<TabSelector />` or similar pill group
-- [ ] "What's the bet?" textarea (inset neomorphic field)
-- [ ] Amount quick-select: $5 / $10 / $25 / $50 / $100 — use `<AmountPicker />`
-- [ ] "Settle by" free-text field
-- [ ] Live preview card at bottom — use `<WagerCard />` in preview mode
-- [ ] Submit: validate balance ≥ amount, write `/wagers/{wagerId}`, deduct balance via Firestore transaction
-- [ ] Navigate to chat on submit
-- [ ] Screen header — use `<ScreenHeader />`
-- [ ] Submit button — use `<PrimaryButton />`
+#### New Wager Screen (`screen-new-wager`) ✅
+- [x] Opponent selector row: horizontal scroll of friend avatars — use `<Avatar />`
+- [x] Category pills: Sports / Awards / Politics / Custom — use `<TabSelector />` or similar pill group
+- [x] "What's the bet?" textarea (inset neomorphic field)
+- [x] Amount quick-select: $5 / $10 / $25 / $50 / $100 — use `<AmountPicker />`
+- [x] "Settle by" free-text field
+- [x] Live preview card at bottom — use `<WagerCard />` in preview mode
+- [x] Submit: validate balance ≥ amount, write `/wagers/{wagerId}`, deduct balance via Firestore transaction
+- [x] Navigate to chat on submit
+- [x] Screen header — use `<ScreenHeader />`
+- [x] Submit button — use `<PrimaryButton />`
 
-#### Wager List Screen (`screen-wagers`) — Personal Dashboard
-- [ ] Balance card at top: wallet balance (Syne numeral), W/L/rate stat pills, streak
-- [ ] Three tabs: Pending / Active / Settled — use `<TabSelector />`
-- [ ] Pending challenge card: opponent avatar, description, amount, Accept + Decline buttons
-- [ ] Wager rows per tab — use `<WagerCard compact />` with `<StatusBadge />`
-- [ ] Empty tab state — use `<EmptyState />`
-- [ ] Tap any wager card → navigate to its chat
+#### Wager List Screen (`screen-wagers`) — Personal Dashboard ✅
+- [x] Balance card at top: wallet balance (Syne numeral), W/L/rate stat pills, streak
+- [x] Three tabs: Pending / Active / Settled — use `<TabSelector />`
+- [x] Pending challenge card: opponent avatar, description, amount, Accept + Decline buttons
+- [x] Wager rows per tab — use `<WagerCard compact />` with `<StatusBadge />`
+- [x] Empty tab state — use `<EmptyState />`
+- [x] Tap any wager card → navigate to its chat
 
-#### Wager Engine (Firestore + logic) — `src/lib/wagerService.ts`
-- [ ] `createWager(data)` — write doc + deduct creator balance (transaction)
-- [ ] `acceptWager(wagerId)` — deduct opponent balance + status → "active" (transaction)
-- [ ] `declineWager(wagerId)` — return creator funds + status → "declined" (transaction)
-- [ ] `settleWager(wagerId, winnerId)` — transfer pot + update wins/losses/streak + upsert H2H (transaction)
-- [ ] `getUserWagers(uid)` — query wagers where creator or opponent
+#### Wager Engine (Firestore + logic) — `src/lib/wagerService.ts` ✅
+- [x] `createWager(data)` — write doc + deduct creator balance (transaction)
+- [x] `acceptWager(wagerId)` — deduct opponent balance + status → "active" (transaction)
+- [x] `declineWager(wagerId)` — return creator funds + status → "declined" (transaction)
+- [x] `settleWager(wagerId, winnerId)` — transfer pot + update wins/losses/streak + upsert H2H (transaction)
+- [x] `getUserWagers(uid)` — query wagers where creator or opponent
 
-**Milestone 3:** Full wager loop end-to-end — create, accept/decline, settle, balance updates, W/L records
+**Milestone 3:** ✅ Full wager loop end-to-end — create, accept/decline, settle, balance updates, W/L records
 
 ---
 
-### Phase 4 — Social Feed + New Post (~4–5 days)
+### Phase 4 — Social Feed + New Post ✅ Complete
 Reference: `screen-home`, `screen-new-post` in prototype
 
-> ⚠️ **Create Tier 3 components before writing feed screens.**
-> Components to create first: `StatPill`, `PostCard`
+#### Components ✅
+- [x] `<StatPill label value accent />` — single stat display, used 6-up on Wagers + Profile
+- [x] `<PostCard post onAction />` — polymorphic feed card: photo / meme / wager-challenge / wager-result
 
-#### Components to create at Phase 4 start
-- [ ] `<StatPill label value accent />` — single stat display, used 6-up on Wagers + Profile
-- [ ] `<PostCard post onAction />` — polymorphic feed card: photo / meme / wager-challenge / wager-result
+#### Home Feed (`screen-home`) ✅
+- [x] Header: GOODGAME wordmark (triple-tap admin) + `<IconButton icon="🔔" showPip />` + real `<Avatar />` from AuthContext
+- [x] Feed from `/posts` collection, ordered by `createdAt` desc
+- [x] All post types rendered via `<PostCard />` — photo, meme, wager-challenge, wager-result
+- [x] Like + comment count display (non-interactive for MVP)
+- [x] Wager-challenge auto-post written atomically inside `createWager` transaction
 
-#### Home Feed (`screen-home`)
-- [ ] Header: RUNIT wordmark (triple-tap admin) + `<IconButton icon="🔔" showPip />` + real `<Avatar />` from AuthContext
-- [ ] Feed from `/posts` collection, ordered by `createdAt` desc
-- [ ] All post types rendered via `<PostCard />` — photo, meme, wager-challenge, wager-result
-- [ ] Like + comment count display (non-interactive for MVP)
-- [ ] Wager-challenge Accept → navigates to New Wager screen pre-filled
-
-#### New Post Screen (`screen-new-post`) — FAB "+"
-Three sub-views:
-
+#### New Post Screen (`screen-new-post`) — FAB "+" ✅
 **Compose view:**
-- [ ] Textarea: "What's on your mind?"
-- [ ] Photo button → device photo picker (`expo-image-picker`)
-- [ ] Meme$ button → Meme Picker sub-view
-- [ ] Wager shortcut → New Wager screen
-- [ ] Post button — use `<PrimaryButton />`
+- [x] Textarea: "What's on your mind?"
+- [x] Photo button → device photo picker (`expo-image-picker`)
+- [x] Meme button → Meme Picker sub-view
+- [x] Wager shortcut → New Wager screen
+- [x] Post button — use `<PrimaryButton />`
 
 **Meme Picker sub-view:**
-- [ ] 2-column grid of 38 meme templates (from `images/memes/`)
+- [x] 2-column grid of 38 meme templates (from `images/memes/`)
 
 **Meme Editor sub-view:**
-- [ ] Template background + top/bottom Impact font text inputs
-- [ ] Live preview; "Use This" returns to compose
+- [x] Template background + top/bottom Impact font text inputs
+- [x] Live preview; "Use This" returns to compose
 
-**Milestone 4:** Users can post photos, memes with Impact text, and wager activity to the social feed
+**Milestone 4:** ✅ Users can post photos, memes with Impact text, and wager activity to the social feed
 
 ---
 
-### Phase 5 — Chat Integration (~4–5 days)
+### Phase 5 — Chat Integration ✅ Complete
 Reference: `screen-chat` in prototype
 
-> ⚠️ **Create Tier 3 components before writing chat screens.**
-> Components to create first: `ChatBubble`, `H2HBanner`
+#### Components ✅
+- [x] `<ChatBubble message isMine />` — message bubble, right-aligned own (team theme colour) / left-aligned neomorphic other
+- [x] `<H2HBanner record />` — "You 3 – 1 Marcus" banner strip
 
-#### Components to create at Phase 5 start
-- [ ] `<ChatBubble message isMine />` — message bubble, right-aligned own (team theme colour) / left-aligned neomorphic other
-- [ ] `<H2HBanner record />` — "You 3 – 1 Marcus" banner strip
+#### Chat List (CometChat) ✅
+- [x] CometChat conversation list via `ChatScreen.native.tsx`
+- [x] Web fallback: "Chat on mobile" card via `ChatScreen.tsx`
+- [x] `NewConversationScreen` — user picker for starting new DMs
 
-#### Chat List
-- [ ] Lists all user wagers (active + pending), ordered by last message time
-- [ ] Each row: `<Avatar />` + wager description truncated + last message + timestamp — use `<NmCard />`
-- [ ] Empty state — use `<EmptyState />`
+#### Chat Detail (CometChat) ✅
+- [x] **Pinned wager card** — use `<WagerCard />` full mode
+- [x] **H2H banner** — use `<H2HBanner />`
+- [x] **Messages** — use `<ChatBubble />` per message; system messages centred
+- [x] Chat input via CometChat SDK
+- [x] Wager system messages (accept/decline/settle) written to Firestore via `messageService.ts`
+- [x] `cometChatReady` guard pattern prevents 401s during SDK init
 
-#### Chat Detail
-- [ ] **Pinned wager card** — use `<WagerCard />` full mode (non-scrolling, always at top)
-- [ ] **H2H banner** — use `<H2HBanner />`
-- [ ] **Messages** — use `<ChatBubble />` per message; system messages centred
-- [ ] **Status badge** on pinned card — use `<StatusBadge />`
-- [ ] Chat input: "Talk trash…" placeholder + send button
-- [ ] CometChat group auto-created on wager creation (GUID = wagerId)
-- [ ] Custom `wager_card` message type on: created / accepted / settled
-- [ ] System message on settlement
+#### Settle Bottom Sheet ✅
+- [x] `<BottomSheet />` + `<PrimaryButton />`
+- [x] Winner selection → calls `settleWager()` from Phase 3
 
-#### Settle Bottom Sheet
-- [ ] Triggered from chat (long-press pinned card or settle button)
-- [ ] Use `<BottomSheet />` + `<PrimaryButton />`
-- [ ] Winner selection → calls `settleWager()` from Phase 3
-
-**Milestone 5:** Every wager lives in a chat — card, trash talk, H2H, settlement announcement
+**Milestone 5:** ✅ Every wager lives in a chat — real-time messaging, H2H, settlement announcement
 
 ---
 
-### Phase 6 — Profile, Polish & Push (~4–5 days)
+### Phase 6 — Profile, Polish & Push ✅ Complete (Push deferred)
 Reference: `screen-profile` in prototype
 
-#### Profile Screen
-- [ ] User `<Avatar size={72} />` + display name
-- [ ] 6-up stat grid — use `<StatPill />` ×6
-- [ ] Two tabs — use `<TabSelector />`: Head to Head / Recent Wagers
-- [ ] H2H tab: horizontal scroll of H2H cards — use `<H2HBanner />` or a dedicated card — reads `/h2h/`
-- [ ] Recent Wagers tab: settled wager list — use `<WagerCard compact />` with win/loss colour
-- [ ] Settings section: Theme picker, Stats Visibility toggle, Share Card button
-- [ ] Theme picker saves `teamTheme` to Firestore → updates `Colors.c1` context app-wide
+#### Profile Screen ✅
+- [x] User `<Avatar size={72} />` + display name
+- [x] 6-up stat grid — use `<StatPill />` ×6
+- [x] Two tabs — use `<TabSelector />`: Head to Head / Recent Wagers
+- [x] H2H tab: horizontal scroll of H2H cards — `<H2HBanner />` — reads `/h2h/`
+- [x] Recent Wagers tab: settled wager list — `<WagerCard compact />` with win/loss colour
+- [x] Settings section: Theme picker, Stats Visibility toggle, Share Card button
+- [x] Theme picker saves `teamTheme` to Firestore → `ThemeContext` updates accent colour app-wide
+- [x] `ThemeContext` — `useTheme().accent` — 6 team colours + purple default
 
-#### Push Notifications (FCM)
+#### Push Notifications (FCM) — Deferred to backlog
 - [ ] New challenge received
 - [ ] Challenge accepted
 - [ ] Wager settled (with result)
 - [ ] New chat message in active wager
 
-#### Remaining Prototype Gaps (V2 — not MVP)
-- [ ] Notifications screen
-- [ ] User search / adding friends
+#### Backlog (V2 — see FEATURES.md)
+- [ ] Push Notifications (FCM) — #1 priority
 - [ ] Wager acceptance from feed challenge card
+- [ ] Other-user profile view
+- [ ] Notifications screen
+- [ ] User search / friend discovery
 - [ ] Real photo upload posting to feed
 - [ ] Meme post posting to feed
 - [ ] Leaderboard screen
 - [ ] Like / comment interactions
-- [ ] **Team theme picker during onboarding** — 6-team colour picker as step after sign-up before Home. Saves `teamTheme` to Firestore. (Profile Settings remains the persistent home.)
+- [ ] Rematch button
+- [ ] Dispute / contest flow
+- [ ] Team theme picker during onboarding
 
-**Milestone 6:** Prototype-complete. All screens implemented. Real user testing ready.
+**Milestone 6:** ✅ All core screens implemented. Real user testing ready. See FEATURES.md for prioritised backlog.
 
 ---
 
@@ -418,7 +410,7 @@ Bottom Nav (visible on all screens except Auth, Admin, New Wager):
   👤 Profile    → screen-profile (stats, H2H tab, Recent tab, Settings)
 
 From anywhere:
-  Triple-tap RUNIT → Admin screen (hidden, no nav item)
+  Triple-tap GOODGAME → Admin screen (hidden, no nav item)
   Tap wager card   → Chat detail for that wager
   Tap user avatar  → Profile screen
 ```

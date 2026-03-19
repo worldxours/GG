@@ -89,7 +89,7 @@ These features significantly improve stickiness and repeat usage but don't block
 ---
 
 ### 6. Leaderboard
-**Why:** Ranked competition among friends is a core RunIt hook — "who's up, who's down." This drives daily check-ins.
+**Why:** Ranked competition among friends is a core GoodGame hook — "who's up, who's down." This drives daily check-ins.
 
 **Views:**
 - Win rate rank
@@ -163,7 +163,7 @@ Nice-to-have features that improve the product but can wait until the core loop 
 
 **Implementation notes:**
 - Expo `expo-linking` + Firebase Dynamic Links (or Branch.io)
-- Deep link schema: `runit://wager/{wagerId}` or `runit://challenge/{uid}`
+- Deep link schema: `goodgame://wager/{wagerId}` or `goodgame://challenge/{uid}`
 - On cold-start with a deep link: after auth, navigate to the relevant screen
 
 ---
