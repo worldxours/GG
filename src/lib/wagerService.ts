@@ -21,6 +21,7 @@ import {
 // The wager-challenge PostDoc is written inline within the createWager transaction
 // so the post and balance deduction happen atomically.
 import { db } from './firebase';
+import { sendSystemMessage } from './messageService';
 import { UserDoc, WagerDoc, WagerCategory, WagerStatus } from '../types';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -142,6 +143,9 @@ export async function acceptWager(wagerId: string, currentUid: string): Promise<
       lifetimeWagered: (opp.lifetimeWagered ?? 0) + wager.amount,
     });
   });
+
+  // System message — non-atomic, informational only
+  await sendSystemMessage(wagerId, '✅ Wager accepted — game on!');
 }
 
 // ── declineWager ──────────────────────────────────────────────────────────────
@@ -174,6 +178,9 @@ export async function declineWager(wagerId: string, currentUid: string): Promise
       walletBalance: (creator.walletBalance ?? 0) + wager.amount,
     });
   });
+
+  // System message — non-atomic, informational only
+  await sendSystemMessage(wagerId, '❌ Wager declined.');
 }
 
 // ── settleWager ───────────────────────────────────────────────────────────────

@@ -4,8 +4,12 @@ export type TeamTheme = 'knicks' | 'canucks' | 'flames' | 'raiders' | 'eagles' |
 export type StatsVisibility = 'private' | 'public';
 
 export interface UserDoc {
+  /** @handle — chosen at onboarding, lowercase, 3–20 chars. null = pending onboarding. */
+  username: string | null;
   displayName: string;
   fullName: string;
+  avatarEmoji: string | null;   // e.g. '⚽' — shown when no photo uploaded
+  avatarUrl: string | null;     // Firebase Storage download URL
   walletBalance: number;
   lifetimeWagered: number;
   lifetimeWon: number;
@@ -16,7 +20,8 @@ export interface UserDoc {
   statsVisibility: StatsVisibility;
   teamTheme: TeamTheme | null;
   createdAt: Timestamp;
-  avatar: string | null;
+  avatar: string | null;        // legacy field — superseded by avatarEmoji / avatarUrl
+  isAdmin: boolean;
 }
 
 export type WagerStatus = 'pending' | 'active' | 'settled' | 'declined' | 'expired';
@@ -34,6 +39,23 @@ export interface WagerDoc {
   settledAt: Timestamp | null;
   winnerId: string | null;
   result: string | null;
+  lastMessageAt?: Timestamp | null;
+  lastMessageText?: string | null;
+}
+
+// ── Messages ──────────────────────────────────────────────────────────────────
+
+export type MessageType = 'text' | 'system' | 'wager_card';
+
+export interface MessageDoc {
+  text: string;
+  userId: string;
+  type: MessageType;
+  createdAt: Timestamp;
+}
+
+export interface MessageWithId extends MessageDoc {
+  id: string;
 }
 
 export type PostType = 'photo' | 'meme' | 'wager-challenge' | 'wager-result';

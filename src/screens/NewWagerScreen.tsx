@@ -26,6 +26,7 @@ import {
   SectionHeader,
 } from '../components';
 import { createWager, CreateWagerData } from '../lib/wagerService';
+import { sendSystemMessage } from '../lib/messageService';
 import { getOtherUsers } from '../lib/userService';
 import { WagerCategory } from '../types';
 
@@ -109,13 +110,18 @@ export default function NewWagerScreen() {
       };
 
       const wagerId = await createWager(data);
+
+      // Seed the chat thread with a system message so the conversation is visible immediately
+      await sendSystemMessage(
+        wagerId,
+        `💬 Wager created — waiting for ${selectedOppName || 'opponent'} to accept.`,
+      );
+
       await refreshUserDoc();
 
-      // Phase 5: navigate to the new wager's chat. For now, go back to Wagers.
-      // TODO: replace with navigation.navigate('Chat', { wagerId }) in Phase 5
+      // Navigate to the new wager's chat detail
       navigation.goBack();
-      // Navigate Wagers tab to show the new pending wager
-      (navigation as any).navigate('Wagers');
+      (navigation as any).navigate('ChatDetail', { wagerId });
     } catch (e: any) {
       Alert.alert(
         'Could not create wager',

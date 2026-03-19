@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors, Spacing, Radius } from '../theme';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { Wordmark } from '../components';
 import HomeScreen from '../screens/HomeScreen';
 import WagersScreen from '../screens/WagersScreen';
@@ -22,6 +23,9 @@ import NewPostScreen from '../screens/NewPostScreen';
 import AuthScreen from '../screens/AuthScreen';
 import AdminScreen from '../screens/AdminScreen';
 import NewWagerScreen from '../screens/NewWagerScreen';
+import ChatDetailScreen from '../screens/ChatDetailScreen';
+import NewConversationScreen from '../screens/NewConversationScreen';
+import OnboardingScreen from '../screens/OnboardingScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -37,6 +41,7 @@ const TAB_CONFIG: Record<string, { icon: string; label: string }> = {
 // ── Custom neomorphic bottom nav pill (matches prototype .nm-nav) ────────────
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { accent } = useTheme();
 
   return (
     <View style={[styles.navOuter, { paddingBottom: Math.max(insets.bottom, 16) }]}>
@@ -49,7 +54,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
             return (
               <TouchableOpacity
                 key={route.key}
-                style={styles.fab}
+                style={[styles.fab, { backgroundColor: accent, shadowColor: accent }]}
                 onPress={() => navigation.navigate(route.name)}
                 activeOpacity={0.85}
               >
@@ -71,7 +76,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
               <Text style={[styles.navIcon, !isActive && styles.navIconInactive]}>
                 {cfg.icon}
               </Text>
-              <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>
+              <Text style={[styles.navLabel, isActive && { color: accent }]}>
                 {cfg.label}
               </Text>
             </TouchableOpacity>
@@ -100,14 +105,15 @@ function MainTabs() {
 
 // ── Root navigator ───────────────────────────────────────────────────────────
 export default function RootNavigator() {
-  const { user, loading, devMode } = useAuth();
+  const { user, loading, devMode, needsOnboarding } = useAuth();
+  const { accent } = useTheme();
   const isAuthenticated = user !== null || devMode;
 
   if (loading) {
     return (
       <View style={styles.splash}>
         <Wordmark size={32} letterSpacing={6} />
-        <ActivityIndicator color={Colors.c1} style={{ marginTop: 24 }} />
+        <ActivityIndicator color={accent} style={{ marginTop: 24 }} />
       </View>
     );
   }
@@ -116,8 +122,16 @@ export default function RootNavigator() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!isAuthenticated ? (
+          // ── Unauthenticated ───────────────────────────────────────────────
           <Stack.Screen name="Auth" component={AuthScreen} />
+        ) : needsOnboarding ? (
+          // ── Authenticated but onboarding not yet complete ─────────────────
+          // username === null means the user is new and hasn't set a handle yet.
+          // This screen dismisses itself by calling refreshUserDoc() which flips
+          // needsOnboarding to false and triggers a re-render into the main app.
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         ) : (
+          // ── Fully authenticated ───────────────────────────────────────────
           <>
             <Stack.Screen name="Main" component={MainTabs} />
             <Stack.Screen
@@ -130,6 +144,8 @@ export default function RootNavigator() {
               component={NewWagerScreen}
               options={{ presentation: 'modal' }}
             />
+            <Stack.Screen name="ChatDetail" component={ChatDetailScreen} />
+            <Stack.Screen name="NewConversation" component={NewConversationScreen} />
           </>
         )}
       </Stack.Navigator>
@@ -197,17 +213,16 @@ const styles = StyleSheet.create({
     color: Colors.muted,
     marginTop: 2,
   },
-  navLabelActive: { color: Colors.c1 },
+  // navLabelActive — applied as inline { color: accent } to keep it dynamic
 
   // FAB — matches .nm-fab (square-ish, NOT a circle)
+  // backgroundColor + shadowColor set dynamically via accent
   fab: {
     width: 48,
     height: 48,
     borderRadius: Radius.fab,        // 17
-    backgroundColor: Colors.c1,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: Colors.c1,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 12,

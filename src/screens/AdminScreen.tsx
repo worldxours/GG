@@ -55,7 +55,7 @@ function DevBadge() {
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function AdminScreen() {
   const navigation = useNavigation();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   const [users, setUsers]           = useState<UserRow[]>([]);
   const [txLog, setTxLog]           = useState<DepositRow[]>([]);
@@ -124,6 +124,15 @@ export default function AdminScreen() {
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
+  if (!isAdmin) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ScreenHeader title="Admin" onBack={() => navigation.goBack()} />
+        <EmptyState icon="🔒" title="Access Denied" subtitle="Admin account required" />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       {/* ScreenHeader — back btn + centred title + DEV ONLY badge */}

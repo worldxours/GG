@@ -12,18 +12,29 @@ service cloud.firestore {
       return isAuthed() && request.auth.uid == uid;
     }
 
+    // Admin is identified by email in the Firebase Auth token — no doc read needed.
+    function isAdmin() {
+      return isAuthed() && request.auth.token.email == 'admin@email.com';
+    }
+
     // ── Users ─────────────────────────────────────────────────────────────────
     // Any signed-in user can read any user doc (needed for display names, avatars).
-    // Only the owner can write their own doc.
+    // create: owner only (prevents impersonation).
+    // update: owner (profile edits) OR admin (fund injection, isAdmin bootstrap).
+    // delete: never.
     match /users/{uid} {
-      allow read:  if isAuthed();
-      allow write: if isOwner(uid);
+      allow read:   if isAuthed();
+      allow create: if isOwner(uid) || isAdmin();
+      allow update: if isOwner(uid) || isAdmin();
+      allow delete: if false;
 
       // ── Deposits subcollection ─────────────────────────────────────────────
-      // Owner can read/write their own deposits.
+      // Admin can create deposits for any user (fund injection).
+      // Read is open to all authed users for the Admin transaction log.
       match /deposits/{depositId} {
-        allow read:  if isAuthed();
-        allow write: if isOwner(uid);
+        allow read:   if isAuthed();
+        allow create: if isAdmin();
+        allow update, delete: if false;
       }
     }
 
@@ -47,6 +58,17 @@ service cloud.firestore {
                        (resource.data.creatorId == request.auth.uid ||
                         resource.data.opp       == request.auth.uid);
       allow delete: if false;
+
+      // ── Messages subcollection ────────────────────────────────────────────
+      // Only the two wager participants can read or post messages.
+      // Messages are immutable once written (no update/delete).
+      match /messages/{msgId} {
+        allow read, create: if isAuthed() && (
+          get(/databases/$(database)/documents/wagers/$(wagerId)).data.creatorId == request.auth.uid ||
+          get(/databases/$(database)/documents/wagers/$(wagerId)).data.opp       == request.auth.uid
+        );
+        allow update, delete: if false;
+      }
     }
 
     // ── H2H records ───────────────────────────────────────────────────────────

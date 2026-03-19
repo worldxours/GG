@@ -6,7 +6,8 @@ import {
   StyleSheet,
   ViewStyle,
 } from 'react-native';
-import { Colors, Radius, Typography } from '../theme';
+import { Radius, Typography } from '../theme';
+import { useTheme } from '../context/ThemeContext';
 
 interface PrimaryButtonProps {
   label: string;
@@ -22,16 +23,12 @@ interface PrimaryButtonProps {
 /**
  * Main CTA button — matches .btn-primary in the prototype.
  *
- * Background: Colors.c1 (purple by default — follows team theme)
+ * Background: team accent colour (follows useTheme — purple by default)
  * Font:       Syne_800ExtraBold, 15px, letterSpacing 0.5
  * Radius:     18 (matches prototype's auth + sheet CTAs)
- * Shadow:     c1 glow — offset 0/4, opacity 0.45, radius 12
+ * Shadow:     accent glow — offset 0/4, opacity 0.45, radius 12
  *
  * Disabled / loading → opacity 0.6, non-interactive.
- *
- * Usage:
- *   <PrimaryButton label="Create Account" onPress={handleSubmit} loading={isLoading} />
- *   <PrimaryButton label="💰 Inject Funds" onPress={handleInject} />
  */
 export default function PrimaryButton({
   label,
@@ -40,11 +37,17 @@ export default function PrimaryButton({
   disabled = false,
   style,
 }: PrimaryButtonProps) {
+  const { accent } = useTheme();
   const inactive = loading || disabled;
 
   return (
     <TouchableOpacity
-      style={[styles.btn, inactive && styles.btnInactive, style]}
+      style={[
+        styles.btn,
+        { backgroundColor: accent, shadowColor: accent },
+        inactive && styles.btnInactive,
+        style,
+      ]}
       onPress={onPress}
       disabled={inactive}
       activeOpacity={0.85}
@@ -62,11 +65,10 @@ export default function PrimaryButton({
 
 const styles = StyleSheet.create({
   btn: {
-    backgroundColor: Colors.c1,
+    // backgroundColor + shadowColor set dynamically via accent
     borderRadius: 18,
     paddingVertical: 16,
     alignItems: 'center',
-    shadowColor: Colors.c1,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.45,
     shadowRadius: 12,

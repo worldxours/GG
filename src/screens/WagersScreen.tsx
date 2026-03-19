@@ -283,7 +283,11 @@ export default function WagersScreen() {
                         compact
                         onPress={
                           w.data.status === 'active'
-                            ? () => console.log('[Phase 5] navigate to chat:', w.id)
+                            ? () => {
+                              const opponentId = w.data.creatorId === currentUid ? w.data.opp : w.data.creatorId;
+                              const opponentName = nameMap.get(opponentId) ?? opponentId.slice(-6);
+                              (navigation as any).navigate('ChatDetail', { receiverUID: opponentId, type: 'user', name: opponentName });
+                            }
                             : undefined
                         }
                       />

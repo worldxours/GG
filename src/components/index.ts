@@ -20,5 +20,8 @@ export type { WagerCardData }       from './WagerCard';
 export { default as StatPill }      from './StatPill';
 
 // ── Tier 3 — Phase 4/5 ───────────────────────────────────────────────────────
-export { default as PostCard }  from './PostCard';
-export type { PostWithId }      from './PostCard';
+export { default as PostCard }    from './PostCard';
+export type { PostWithId }        from './PostCard';
+export { default as ChatBubble }  from './ChatBubble';
+export type { NormalizedMessage } from './ChatBubble';
+export { default as H2HBanner }   from './H2HBanner';

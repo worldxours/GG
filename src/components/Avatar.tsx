@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import { Radius } from '../theme';
 
 // Six accent colours that work on the dark background
@@ -27,10 +27,10 @@ function getInitials(displayName: string): string {
 
 /** Border radius varies by avatar size to stay proportional */
 function radiusForSize(size: number): number {
-  if (size <= 32) return Radius.sm;   // 10
-  if (size <= 44) return Radius.md;   // 14
-  if (size <= 56) return Radius.lg;   // 18
-  return Radius.profile;              // 22 — large profile avatar
+  if (size <= 32) return Radius.sm;    // 10
+  if (size <= 44) return Radius.md;    // 14
+  if (size <= 56) return Radius.lg;    // 18
+  return Radius.profile;               // 22 — large profile avatar
 }
 
 interface AvatarProps {
@@ -38,27 +38,55 @@ interface AvatarProps {
   displayName: string;
   /** Side length in px. Default 32. */
   size?: number;
+  /**
+   * Emoji avatar (e.g. '⚽'). Rendered centred on the colour background.
+   * Takes priority over initials if no uri is provided.
+   */
+  emoji?: string | null;
+  /**
+   * Photo URI (local file path or remote URL).
+   * Takes priority over emoji and initials when provided.
+   */
+  uri?: string | null;
 }
 
 /**
- * Square neomorphic avatar with colour-coded initials.
+ * Square neomorphic avatar.
+ * Render priority: photo URI > emoji > colour-coded initials.
  * Colour is deterministic from uid — consistent everywhere in the app.
  */
-export default function Avatar({ uid, displayName, size = 32 }: AvatarProps) {
+export default function Avatar({ uid, displayName, size = 32, emoji, uri }: AvatarProps) {
   const radius = radiusForSize(size);
+  const color  = avatarColor(uid);
+
+  // ── Photo URI ────────────────────────────────────────────────────────────────
+  if (uri) {
+    return (
+      <Image
+        source={{ uri }}
+        style={[
+          styles.container,
+          { width: size, height: size, borderRadius: radius },
+        ]}
+      />
+    );
+  }
+
+  // ── Emoji or initials on coloured background ─────────────────────────────────
   return (
     <View style={[
       styles.container,
-      {
-        width: size,
-        height: size,
-        borderRadius: radius,
-        backgroundColor: avatarColor(uid),
-      },
+      { width: size, height: size, borderRadius: radius, backgroundColor: color },
     ]}>
-      <Text style={[styles.initials, { fontSize: Math.round(size * 0.34) }]}>
-        {getInitials(displayName)}
-      </Text>
+      {emoji ? (
+        <Text style={{ fontSize: Math.round(size * 0.52), lineHeight: size }}>
+          {emoji}
+        </Text>
+      ) : (
+        <Text style={[styles.initials, { fontSize: Math.round(size * 0.34) }]}>
+          {getInitials(displayName)}
+        </Text>
+      )}
     </View>
   );
 }
@@ -71,6 +99,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+    overflow: 'hidden', // clip photo to border radius
   },
   initials: {
     color: '#fff',

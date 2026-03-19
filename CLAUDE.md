@@ -23,7 +23,7 @@ The prototype (UI-only, single HTML file with mock data) lives at `/Users/Shared
 ```
 src/
   components/       ← Shared UI components (see below — use before building screens)
-  context/          ← React context providers (AuthContext)
+  context/          ← React context providers (AuthContext, ThemeContext)
   lib/              ← Firebase/Firestore service functions (no UI)
   navigation/       ← Root navigator, tab bar, screen registration
   screens/          ← One file per screen — import components, do not inline design
@@ -38,6 +38,7 @@ src/
 4. **One style object per file.** `StyleSheet.create({})` at the bottom of each file. No inline `style={{ }}` except for dynamic values (e.g. `{ width: size }`).
 5. **Services are pure functions.** `src/lib/` files contain only Firestore/Firebase calls — no `useState`, no navigation. Screens call service functions.
 6. **TypeScript strict — 0 errors before any commit.** Run `npx tsc --noEmit` before marking a phase complete.
+7. **Dynamic accent colour.** Never hardcode `Colors.c1` in components that should follow team theme. Use `useTheme().accent` instead — it returns the team accent (or purple default). `PrimaryButton`, the FAB, and nav label all use this.
 
 ---
 
@@ -57,7 +58,7 @@ All components are exported from the barrel file: `import { Wordmark, Avatar, Nm
 | `<CardDivider />` | — | 1px `Colors.divider` horizontal rule between card rows. |
 | `<BottomSheet visible onClose style>` | `visible: boolean` `onClose: () => void` `style?: ViewStyle` | Slide-up modal with dark overlay, drag handle, `borderTopRadius: Radius.sheet (28)`. Tap overlay to dismiss. |
 | `<IconButton icon showPip onPress size />` | `icon: string` `showPip?: boolean` `onPress?: fn` `size?: number` | 38×38 raised neomorphic button. Optional `Colors.c1` notification pip. |
-| `<SectionHeader label actionLabel onAction />` | `label: string` `actionLabel?: string` `onAction?: fn` | 10px uppercase muted label + optional right-side tappable action. |
+| `<SectionHeader label actionLabel onAction />` | `label: string` `actionLabel?: string` `onAction?: fn` | 10px uppercase muted label + optional right-side tappable action. Note: does NOT accept a `style` prop — wrap in a `<View>` to add margin. |
 
 ### Tier 2 — Completed (Phase 3 prep)
 
@@ -66,23 +67,36 @@ These were built before Phase 3 screens. AdminScreen was refactored to use `Scre
 | Component | Props | Purpose |
 |---|---|---|
 | `<ScreenHeader title onBack rightElement />` | `title: string` `onBack?: fn \| null` `rightElement?: ReactNode` | Top bar for every push screen. Back button left, title centred, optional right slot (e.g. DEV badge). |
-| `<PrimaryButton label onPress loading disabled />` | `label: string` `onPress: fn` `loading?: bool` `disabled?: bool` | Purple CTA button. Syne ExtraBold, `borderRadius: 18`, c1 glow shadow. Loading → spinner, disabled → opacity 0.6. |
+| `<PrimaryButton label onPress loading disabled />` | `label: string` `onPress: fn` `loading?: bool` `disabled?: bool` | CTA button. Uses `useTheme().accent` for bg+shadow — follows team colour. Syne ExtraBold, `borderRadius: 18`. Loading → spinner, disabled → opacity 0.6. |
 | `<StatusBadge status />` | `status: WagerStatus \| 'live' \| 'win' \| 'loss'` | Coloured pill with semi-transparent tint bg. pending=amber, active/live/win=green, loss=red, settled/declined=muted. |
 | `<AmountPicker amounts selected onSelect />` | `amounts?: number[]` `selected: number` `onSelect: fn` | Row of neomorphic quick-select amount buttons. Inset (bg + c1 border) on active. Custom amounts array optional. |
 | `<EmptyState icon title subtitle />` | `icon: string` `title: string` `subtitle?: string` | Centred empty-list state. `flex: 1` — fills its container. Used on every list screen. |
 | `<TabSelector tabs selected onSelect scrollable />` | `tabs: {key,label}[]` `selected: T` `onSelect: fn` `scrollable?: bool` | Horizontal tab switcher. Container = raised pill. Active = inset (bg + border). Generic over T — TypeScript infers tab union type. |
 | `<WagerCard wager compact onPress />` | `wager: WagerCardData` `compact?: bool` `onPress?: fn` | **Most-reused component.** Compact mode: list rows. Full mode: pinned chat card / New Wager preview. Left accent border = category colour. |
 
-### Tier 3 — Phase 4 complete, Phase 5 pending
+### Tier 3 — All complete (Phases 4–6)
 
-> **Rule:** Create the component in `src/components/` before writing the screen that uses it. Do not inline it.
+| Component | Purpose |
+|---|---|
+| `<StatPill label value accent />` | Single stat display (label + value). Used 6-up on Wagers + Profile screens. |
+| `<PostCard post authorName opponentName />` | Polymorphic feed card — photo / meme / wager-challenge / wager-result. `PostWithId` type defined in `postService.ts`, re-exported from PostCard. |
+| `<ChatBubble message isMine />` | Message bubble. `NormalizedMessage` props (adapter type). Own: right-aligned, `Colors.c1` bg. Other: left-aligned, raised neomorphic. System messages: centred muted italic. |
+| `<H2HBanner myWins theirWins theirName />` | "You 3 – 1 Marcus" banner strip in chat detail and profile H2H rows. |
 
-| Component | Status | Purpose |
-|---|---|---|
-| `<StatPill label value accent />` | ✅ Done | Single stat display (label + value). Used 6-up on Wagers + Profile screens. |
-| `<PostCard post authorName opponentName />` | ✅ Done | Polymorphic feed card — photo / meme / wager-challenge / wager-result. `PostWithId` type defined in `postService.ts`, re-exported from PostCard. |
-| `<ChatBubble message isMine />` | 🔲 Phase 5 | Message bubble. Own: right-aligned, `Colors.c1` bg. Other: left-aligned, raised neomorphic. System messages: centred muted italic. |
-| `<H2HBanner record />` | 🔲 Phase 5 | "You 3 – 1 Marcus" banner strip in chat detail. Props: `myWins`, `theirWins`, `theirName`. |
+---
+
+## Context Providers
+
+### `AuthContext` — `src/context/AuthContext.tsx`
+- Exposes: `user`, `userDoc`, `isAdmin`, `loading`, `devMode`, `cometChatReady`, `signUp`, `signIn`, `signOut`, `skipAuth`, `refreshUserDoc`
+- **`cometChatReady`** — boolean that flips `true` only after `initCometChat` + `createCometChatUser` + `loginCometChat` have all resolved. CometChat API calls must be gated behind this flag (see ChatScreen and ChatDetailScreen). App becomes interactive as soon as Firebase/Firestore is ready; CometChat runs in the background.
+- CometChat init/login sequence: `initCometChat` is `await`ed before `onAuthStateChanged` is registered, ensuring the SDK is ready before any login attempt. `createCometChatUser` is called every time (idempotent via `ERR_UID_ALREADY_EXISTS`) to handle accounts that predate Phase 5B.
+
+### `ThemeContext` — `src/context/ThemeContext.tsx`
+- Exposes: `accent: string` via `useTheme()`
+- Must be rendered INSIDE `<AuthProvider>` (reads `userDoc.teamTheme`)
+- `TEAM_COLORS` map: knicks `#f58426`, canucks `#00b4d8`, flames `#ff4713`, raiders `#a5acaf`, eagles `#69be28`, 49ers `#e31837`. Defaults to `Colors.c1` (purple) when no team is set.
+- `TEAM_LABELS` map: human-readable team names for the picker UI.
 
 ---
 
@@ -173,41 +187,49 @@ Knicks, Canucks, Flames, Raiders, Philadelphia Eagles, San Francisco 49ers
 - [x] AdminScreen refactored — uses ScreenHeader, AmountPicker, PrimaryButton, EmptyState
 - [x] Phase 3 — wagerService (createWager, acceptWager, declineWager, settleWager, getUserWagers), NewWagerScreen, WagersScreen (balance card, 3 tabs, accept/decline flows)
 - [x] Phase 4 — postService (createPost, getFeedPosts), HomeScreen (social feed, pull-to-refresh), NewPostScreen (compose / meme-picker / meme-editor sub-views, expo-image-picker)
-- [x] Component library Tier 3 partial — StatPill, PostCard (photo/meme/wager-challenge/wager-result)
+- [x] Component library Tier 3 — StatPill, PostCard, ChatBubble (NormalizedMessage adapter), H2HBanner
 - [x] Wager-challenge auto-post — written atomically inside createWager transaction; appears in feed immediately after wager creation
+- [x] Phase 5 — messageService (Firestore wager system messages), ChatBubble + H2HBanner components
+- [x] Phase 5B — CometChat integration: cometchat.ts, AuthContext CometChat lifecycle, ChatScreen (CometChat convo list), ChatDetailScreen (CometChat messages), NewConversationScreen; EAS Build configured
+- [x] Phase 6 — ProfileScreen (avatar, 6-up stats, H2H tab, Recent tab, settings sheet), ThemeContext (dynamic accent colour), updateUserProfile service, team theme picker (6 teams), stats visibility toggle
 
 ## What's Next
-- [ ] Phase 5 — Chat Integration ← **start here** (build ChatBubble + H2HBanner first)
-- [ ] Phase 6 — Profile, Polish & Push Notifications
+- [ ] Push Notifications (FCM) — new challenge, challenge accepted, wager settled, new chat message (was originally part of Phase 6 scope, deferred)
 
-## Phase 5 — Architecture Notes (read before starting)
+## Build Environment
 
-### Chat messaging backend — use Firestore, not CometChat SDK directly
-CometChat requires a native development build (not Expo Go). The SDK is currently stubbed in `src/lib/cometchat.ts`. **For Phase 5, implement real-time messaging using a Firestore subcollection:**
+### Expo Development Build (NOT Expo Go)
+This app uses **Expo Development Build** via EAS. Expo Go is NOT supported (CometChat requires native modules).
 
+To build:
+```bash
+npx eas build --profile development --platform ios
+# or
+npx eas build --profile development --platform android
 ```
-/wagers/{wagerId}/messages/{msgId}
-  text        string
-  userId      string
-  type        string   ("text" | "system" | "wager_card")
-  createdAt   timestamp
+Install the resulting `.ipa` / `.apk` on your device/simulator.
+
+### Chat backend — CometChat SDK
+The Chat tab uses **CometChat** (`@cometchat/chat-sdk-react-native`) for real-time 1:1 DMs and group chats.
+- `src/lib/cometchat.ts` — init, createUser, login, logout wrappers
+- AuthContext handles CometChat lifecycle: `initCometChat` awaited first, then `createCometChatUser` + `loginCometChat` per user (both idempotent). `cometChatReady` flag exposed on context.
+- **`cometChatReady` guard pattern**: ChatScreen and ChatDetailScreen check `if (!cometChatReady) return` in their data-loading `useEffect`s — prevents 401 errors from calling CometChat APIs before the session is established.
+- ChatScreen = CometChat conversation list
+- ChatDetailScreen = CometChat messages + H2HBanner
+- NewConversationScreen = user picker for starting a new DM
+
+**Wager system messages** (accept/decline/settle events) are still written to Firestore `/wagers/{wagerId}/messages` via `messageService.ts`.
+
+### Navigation — ChatDetail params
+```ts
+ChatDetail:      { receiverUID: string; type: 'user' | 'group'; name: string }
+NewConversation: undefined
 ```
-
-Use `onSnapshot` for real-time updates. This works in Expo Go + web preview and is a perfectly valid permanent solution for friend-scale usage. CometChat can layer on top later if push notifications from chat are needed.
-
-### Navigation — ChatDetail is a push screen in the root Stack
-Do NOT implement chat as sub-views inside `ChatScreen`. Instead:
-- `ChatScreen` (the tab) = Chat List only
-- `ChatDetailScreen` = new push screen registered in `src/navigation/index.tsx` as `ChatDetail`
-- Route param: `{ wagerId: string }`
-- `WagersScreen.tsx` line ~286 has a `console.log('[Phase 5] navigate to chat:', w.id)` placeholder — wire it to `(navigation as any).navigate('ChatDetail', { wagerId: w.id })`
-
-### Settle flow — who can call settleWager?
-`settleWager(wagerId, winnerId)` is already implemented in `wagerService.ts`. Both participants can call it (no ownership check). The settle bottom sheet in ChatDetail should show both players as selectable winner options.
 
 ---
 
 ## Prototype — What's NOT Yet in RN (future phases)
+- [ ] Push Notifications (FCM)
 - [ ] Notifications screen
 - [ ] User search / adding friends
 - [ ] Wager acceptance flow (from the feed challenge card)

@@ -6,6 +6,7 @@ import { useFonts, Syne_800ExtraBold, Syne_700Bold } from '@expo-google-fonts/sy
 import { Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 
 import { AuthProvider } from './src/context/AuthContext';
+import { ThemeProvider } from './src/context/ThemeContext';
 import RootNavigator from './src/navigation';
 import { Colors } from './src/theme';
 
@@ -30,8 +31,10 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <StatusBar style="light" />
-      <RootNavigator />
+      <ThemeProvider>
+        <StatusBar style="light" />
+        <RootNavigator />
+      </ThemeProvider>
     </AuthProvider>
   );
 }
