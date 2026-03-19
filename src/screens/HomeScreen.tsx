@@ -15,6 +15,7 @@ import { useAuth } from '../context/AuthContext';
 import { Wordmark, IconButton, Avatar, EmptyState, PostCard } from '../components';
 import { PostWithId, getFeedPosts } from '../lib/postService';
 import { getUserDisplayNames } from '../lib/userService';
+import { acceptWager, declineWager } from '../lib/wagerService';
 
 const TAP_WINDOW = 700;
 
@@ -68,6 +69,31 @@ export default function HomeScreen() {
 
   const currentUid = user?.uid ?? '';
 
+  // ── Wager accept / decline from feed ──────────────────────────────────────
+  const handleAccept = useCallback(async (wagerId: string) => {
+    if (!currentUid) return;
+    try {
+      await acceptWager(wagerId, currentUid);
+      await loadFeed();
+    } catch (e) {
+      console.error('HomeScreen: acceptWager error', e);
+    }
+  }, [currentUid, loadFeed]);
+
+  const handleDecline = useCallback(async (wagerId: string) => {
+    if (!currentUid) return;
+    try {
+      await declineWager(wagerId, currentUid);
+      await loadFeed();
+    } catch (e) {
+      console.error('HomeScreen: declineWager error', e);
+    }
+  }, [currentUid, loadFeed]);
+
+  const handlePressAuthor = useCallback((uid: string) => {
+    (navigation as any).navigate('UserProfile', { uid });
+  }, [navigation]);
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
@@ -114,6 +140,14 @@ export default function HomeScreen() {
               const opponentName = post.data.opponentId
                 ? (nameMap.get(post.data.opponentId) ?? post.data.opponentId.slice(-6))
                 : undefined;
+
+              // Show Accept/Decline only when this is a pending challenge to the
+              // current user (viewer is the opponent, not the creator).
+              const isChallengeToMe =
+                post.data.type === 'wager-challenge' &&
+                post.data.opponentId === currentUid &&
+                post.data.wagerId !== null;
+
               return (
                 <PostCard
                   key={post.id}
@@ -121,6 +155,9 @@ export default function HomeScreen() {
                   authorName={authorName}
                   opponentName={opponentName}
                   style={styles.postCard}
+                  onPressAuthor={handlePressAuthor}
+                  onAccept={isChallengeToMe ? handleAccept : undefined}
+                  onDecline={isChallengeToMe ? handleDecline : undefined}
                 />
               );
             })}

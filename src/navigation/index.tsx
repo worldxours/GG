@@ -26,6 +26,7 @@ import NewWagerScreen from '../screens/NewWagerScreen';
 import ChatDetailScreen from '../screens/ChatDetailScreen';
 import NewConversationScreen from '../screens/NewConversationScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
+import UserProfileScreen from '../screens/UserProfileScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -146,6 +147,7 @@ export default function RootNavigator() {
             />
             <Stack.Screen name="ChatDetail" component={ChatDetailScreen} />
             <Stack.Screen name="NewConversation" component={NewConversationScreen} />
+            <Stack.Screen name="UserProfile" component={UserProfileScreen} />
           </>
         )}
       </Stack.Navigator>

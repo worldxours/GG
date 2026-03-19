@@ -3,6 +3,7 @@ import {
   View,
   Text,
   Image,
+  TouchableOpacity,
   StyleSheet,
   ViewStyle,
 } from 'react-native';
@@ -40,6 +41,12 @@ interface PostCardProps {
   /** Resolved display name for post.data.opponentId (wager posts) */
   opponentName?: string;
   style?: ViewStyle;
+  /** Called when the author avatar / name is tapped — navigate to their profile */
+  onPressAuthor?: (uid: string) => void;
+  /** Called when the viewer is the challenged opponent and taps Accept */
+  onAccept?: (wagerId: string) => void;
+  /** Called when the viewer is the challenged opponent and taps Decline */
+  onDecline?: (wagerId: string) => void;
 }
 
 /**
@@ -59,19 +66,36 @@ export default function PostCard({
   authorName,
   opponentName = 'Opponent',
   style,
+  onPressAuthor,
+  onAccept,
+  onDecline,
 }: PostCardProps) {
   const { data } = post;
+
+  const headerInner = (
+    <>
+      <Avatar uid={data.userId} displayName={authorName} size={36} />
+      <View style={styles.headerMeta}>
+        <Text style={styles.authorName}>{authorName}</Text>
+        <Text style={styles.timestamp}>{relativeTime(data.createdAt)}</Text>
+      </View>
+    </>
+  );
 
   return (
     <View style={[styles.card, style]}>
       {/* ── Header ── */}
-      <View style={styles.header}>
-        <Avatar uid={data.userId} displayName={authorName} size={36} />
-        <View style={styles.headerMeta}>
-          <Text style={styles.authorName}>{authorName}</Text>
-          <Text style={styles.timestamp}>{relativeTime(data.createdAt)}</Text>
-        </View>
-      </View>
+      {onPressAuthor ? (
+        <TouchableOpacity
+          style={styles.header}
+          onPress={() => onPressAuthor(data.userId)}
+          activeOpacity={0.7}
+        >
+          {headerInner}
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.header}>{headerInner}</View>
+      )}
 
       {/* ── Body — varies by type ── */}
       {data.type === 'photo' && (
@@ -86,10 +110,13 @@ export default function PostCard({
       )}
       {data.type === 'wager-challenge' && (
         <WagerChallengeBody
+          wagerId={data.wagerId}
           opponentName={opponentName}
           amount={data.amount}
           caption={data.caption}
           category={null}
+          onAccept={onAccept}
+          onDecline={onDecline}
         />
       )}
       {data.type === 'wager-result' && (
@@ -163,17 +190,24 @@ function MemeBody({
 
 // ── Wager-challenge body ──────────────────────────────────────────────────────
 function WagerChallengeBody({
+  wagerId,
   opponentName,
   amount,
   caption,
   category,
+  onAccept,
+  onDecline,
 }: {
+  wagerId: string | null;
   opponentName: string;
   amount: number | null;
   caption: string | null;
   category: string | null;
+  onAccept?: (wagerId: string) => void;
+  onDecline?: (wagerId: string) => void;
 }) {
   const accent = category ? (CATEGORY_COLOR[category] ?? Colors.c1) : Colors.c1;
+  const showActions = !!(wagerId && (onAccept || onDecline));
   return (
     <View style={styles.wagerChallengeBody}>
       <View style={styles.wagerChallengeRow}>
@@ -195,6 +229,30 @@ function WagerChallengeBody({
           ) : null}
         </View>
       </View>
+
+      {/* ── Accept / Decline — only shown to the challenged party ── */}
+      {showActions ? (
+        <View style={styles.wagerActionsRow}>
+          {onDecline ? (
+            <TouchableOpacity
+              style={[styles.wagerActionBtn, styles.wagerDeclineBtn]}
+              onPress={() => onDecline(wagerId!)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.wagerDeclineText}>Decline</Text>
+            </TouchableOpacity>
+          ) : null}
+          {onAccept ? (
+            <TouchableOpacity
+              style={[styles.wagerActionBtn, styles.wagerAcceptBtn]}
+              onPress={() => onAccept(wagerId!)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.wagerAcceptText}>Accept 🤝</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -359,6 +417,40 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 4,
     lineHeight: 18,
+  },
+
+  // Accept / Decline action row
+  wagerActionsRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  wagerActionBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  wagerAcceptBtn: {
+    backgroundColor: 'rgba(34,197,94,0.12)',
+    borderColor: Colors.win,
+  },
+  wagerAcceptText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.win,
+    letterSpacing: 0.3,
+  },
+  wagerDeclineBtn: {
+    backgroundColor: 'rgba(239,68,68,0.08)',
+    borderColor: Colors.loss,
+  },
+  wagerDeclineText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.loss,
+    letterSpacing: 0.3,
   },
 
   // Wager result
