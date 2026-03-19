@@ -6,7 +6,9 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build:web": "expo export --platform web",
+    "deploy": "npm run build:web && touch dist/.nojekyll && (cd dist && git init -b gh-pages && git add -f . && git commit -m 'Deploy to GitHub Pages' && git push -f https://github.com/worldxours/GG.git gh-pages)"
   },
   "dependencies": {
     "@cometchat/chat-sdk-react-native": "^4.0.20",

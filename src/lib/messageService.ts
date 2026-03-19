@@ -2,7 +2,7 @@
  * messageService.ts — Firestore operations for wager chat messages.
  *
  * Messages live in a subcollection: /wagers/{wagerId}/messages/{msgId}
- * Real-time updates via onSnapshot — works in Expo Go and web preview.
+ * Real-time updates via onSnapshot — works in development build and web.
  *
  * All functions are pure (no useState, no navigation).
  */

@@ -6,6 +6,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["expo", "start", "--web"],
       "port": 8081
+    },
+    {
+      "name": "RunIt Dist",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3456", "/tmp/runit-preview"],
+      "port": 3456
     }
   ]
 }

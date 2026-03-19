@@ -55,8 +55,11 @@ Use the prototype as the living spec during every build phase. Open it alongside
 | Payments | Mock wallet (`walletBalance` in Firestore) |
 | Images | `expo-image-picker` |
 | Meme editor | `react-native-view-shot` + custom overlay |
+| Web | Expo web (`react-native-web`) → GitHub Pages at **https://worldxours.github.io/GG/** |
 
 > **Expo vs Expo Go:** CometChat requires custom native modules and does not run in Expo Go. Use `eas build --profile development` to generate a development build. All development and testing happens in the development build, not Expo Go. Firebase JS SDK works fine in both Expo Go and development builds — no additional native config needed for Auth + Firestore.
+
+> **Web build:** `npm run deploy` builds the web bundle and pushes to the `gh-pages` branch. CometChat is excluded from the web bundle via Metro platform-specific files (`cometchat.native.ts` for iOS/Android, `cometchat.ts` no-op stub for web). Chat screens show a "Chat on mobile" fallback on web. GitHub Actions (`.github/workflows/deploy.yml`) auto-deploys on push to `main` — requires `EXPO_PUBLIC_*` vars as GitHub Secrets.
 
 ---
 

@@ -209,9 +209,33 @@ npx eas build --profile development --platform android
 ```
 Install the resulting `.ipa` / `.apk` on your device/simulator.
 
+### Web — GitHub Pages
+The app also ships as an Expo web build to **https://worldxours.github.io/GG/**.
+
+**Platform-specific files pattern** — CometChat is a native-only SDK that crashes on web. The fix uses Metro's file resolution: `file.native.ts` is picked for iOS/Android; `file.ts` is the web fallback. No runtime checks, no bundle bloat — completely transparent to the rest of the app.
+
+| File | Platform | Purpose |
+|---|---|---|
+| `src/lib/cometchat.native.ts` | iOS + Android | Full CometChat implementation |
+| `src/lib/cometchat.ts` | Web | No-op stubs — no CometChat import |
+| `src/screens/ChatScreen.native.tsx` | iOS + Android | CometChat conversation list |
+| `src/screens/ChatScreen.tsx` | Web | "Chat on mobile" fallback card |
+| `src/screens/ChatDetailScreen.native.tsx` | iOS + Android | CometChat message thread |
+| `src/screens/ChatDetailScreen.tsx` | Web | "Chat on mobile" fallback card |
+
+**Deploy commands:**
+```bash
+npm run build:web   # expo export --platform web → dist/
+npm run deploy      # build:web + gh-pages -d dist (pushes to gh-pages branch)
+```
+
+**CI/CD:** `.github/workflows/deploy.yml` auto-deploys on every push to `main`. Requires all `EXPO_PUBLIC_*` vars set as **GitHub Secrets** in the repo settings (Firebase + CometChat + admin email).
+
+> **Rule for future native-only modules:** apply the same `.native.ts` / `.ts` split. Never use platform-guarded `require()` calls — Metro tree-shaking is not reliable enough to strip native modules from the web bundle.
+
 ### Chat backend — CometChat SDK
 The Chat tab uses **CometChat** (`@cometchat/chat-sdk-react-native`) for real-time 1:1 DMs and group chats.
-- `src/lib/cometchat.ts` — init, createUser, login, logout wrappers
+- `src/lib/cometchat.native.ts` — init, createUser, login, logout wrappers (native only; `cometchat.ts` is a web no-op stub)
 - AuthContext handles CometChat lifecycle: `initCometChat` awaited first, then `createCometChatUser` + `loginCometChat` per user (both idempotent). `cometChatReady` flag exposed on context.
 - **`cometChatReady` guard pattern**: ChatScreen and ChatDetailScreen check `if (!cometChatReady) return` in their data-loading `useEffect`s — prevents 401 errors from calling CometChat APIs before the session is established.
 - ChatScreen = CometChat conversation list
