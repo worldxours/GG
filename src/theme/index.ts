@@ -1,4 +1,4 @@
-// RunIt design system — neomorphic dark theme
+// GoodGame design system — neomorphic dark theme
 // Mirrors the CSS variables in runit_prototype.html
 
 export const Colors = {

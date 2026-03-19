@@ -197,7 +197,7 @@ export default function OnboardingScreen() {
               <Text style={styles.stepEmoji}>👋</Text>
               <Text style={styles.stepTitle}>Choose your username</Text>
               <Text style={styles.stepSubtitle}>
-                This is your @handle in RunIt. You can change it later in settings.
+                This is your @handle in GoodGame. You can change it later in settings.
               </Text>
 
               <View style={styles.usernameRow}>

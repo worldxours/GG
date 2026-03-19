@@ -65,7 +65,7 @@ export default function NewConversationScreen() {
             <EmptyState
               icon="👥"
               title="No other users yet"
-              subtitle="Invite friends to join RunIt"
+              subtitle="Invite friends to join GoodGame"
             />
           ) : (
             <NmCard style={styles.listCard}>

@@ -1,4 +1,4 @@
-# RunIt — Design System Reference
+# GoodGame — Design System Reference
 
 > **Source of truth:** `/Users/Shared/RunIt/runit_prototype.html`
 > Every screen in the React Native build must match this prototype visually.

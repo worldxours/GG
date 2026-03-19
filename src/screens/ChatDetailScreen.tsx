@@ -25,7 +25,7 @@ export default function ChatDetailScreen() {
           <Text style={styles.icon}>💬</Text>
           <Text style={styles.title}>Chat on mobile</Text>
           <Text style={styles.subtitle}>
-            Real-time messaging is available in the RunIt mobile app.
+            Real-time messaging is available in the GoodGame mobile app.
           </Text>
         </NmCard>
       </View>

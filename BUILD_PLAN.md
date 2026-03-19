@@ -1,4 +1,4 @@
-# RunIt — Build Plan v2
+# GoodGame — Build Plan v2
 > Updated to reflect the current prototype (`runit_prototype.html`, reviewed live at GitHub Pages).
 > Previous version predated the prototype. This version uses the prototype as the canonical spec.
 

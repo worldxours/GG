@@ -1,4 +1,4 @@
-# RunIt — Test Plan
+# GoodGame — Test Plan
 
 > One section per build phase. Each test has a **precondition**, **steps**, and **expected result**.
 > Run all tests in a development build on a physical device unless marked `[web ok]`.

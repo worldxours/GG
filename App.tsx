@@ -23,7 +23,7 @@ export default function App() {
     return (
       <View style={{ flex: 1, backgroundColor: Colors.bg, alignItems: 'center', justifyContent: 'center' }}>
         <Text style={{ color: Colors.text, fontSize: 32, letterSpacing: 8, fontWeight: '800' }}>
-          RUNIT
+          GOODGAME
         </Text>
       </View>
     );

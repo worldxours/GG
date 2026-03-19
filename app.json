@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "RunIt",
-    "slug": "runit-app",
+    "name": "GoodGame",
+    "slug": "goodgame-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,7 +13,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.runit.app"
+      "bundleIdentifier": "com.goodgame.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +22,7 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.runit.app",
+      "package": "com.goodgame.app",
       "minSdkVersion": 24
     },
     "web": {

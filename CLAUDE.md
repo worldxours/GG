@@ -1,4 +1,4 @@
-# RunIt — Claude Session Context
+# GoodGame — Claude Session Context
 
 ## Key Documents
 
@@ -11,7 +11,7 @@
 ---
 
 ## What This Project Is
-RunIt is a social sports wagering app. Friends place bets against each other (not a sportsbook), share sports content, and talk trash. Think a mashup of Venmo + Instagram + iMessage, sports-flavoured.
+GoodGame is a social sports wagering app. Friends place bets against each other (not a sportsbook), share sports content, and talk trash. Think a mashup of Venmo + Instagram + iMessage, sports-flavoured.
 
 The prototype (UI-only, single HTML file with mock data) lives at `/Users/Shared/RunIt/runit_prototype.html`. This repo (`runit-app/`) is the real build (Firebase/Firestore backend).
 
@@ -52,7 +52,7 @@ All components are exported from the barrel file: `import { Wordmark, Avatar, Nm
 
 | Component | Props | Purpose |
 |---|---|---|
-| `<Wordmark size letterSpacing />` | `size?: number` `letterSpacing?: number` | RUNIT split-colour wordmark. "RUN" in `Colors.text`, "IT" in `Colors.c1`. |
+| `<Wordmark size letterSpacing />` | `size?: number` `letterSpacing?: number` | GOODGAME split-colour wordmark. "GOOD" in `Colors.text`, "GAME" in `Colors.c1`. |
 | `<Avatar uid displayName size />` | `uid: string` `displayName: string` `size?: number` | Square avatar with colour-coded initials. Colour is deterministic from uid — consistent everywhere. |
 | `<NmCard paddingHorizontal style>` | `paddingHorizontal?: number` `style?: ViewStyle` | Raised neomorphic card. `borderRadius: Radius.card (22)`, `Colors.raised` bg, 6×6 shadow. |
 | `<CardDivider />` | — | 1px `Colors.divider` horizontal rule between card rows. |
@@ -134,7 +134,7 @@ python3 -m http.server 3456 --directory /Users/Shared/RunIt
 | `new-wager` | New wager form |
 | `chat` | 💬 Chat — conversation list + detail sub-views |
 | `profile` | 👤 Profile |
-| `admin` | Triple-tap RUNIT logo |
+| `admin` | Triple-tap GOODGAME logo |
 
 ### Chat screen has two sub-views (not separate screens)
 - `#chat-list-view` — conversation list (shown when Chat nav tapped)
