@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { TEAM_COLORS, TEAM_LABELS } from '../context/ThemeContext';
@@ -53,6 +54,7 @@ interface H2HRecord {
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function ProfileScreen() {
+  const navigation = useNavigation();
   const { user, userDoc, signOut, refreshUserDoc } = useAuth();
   const { accent } = useTheme();
 
@@ -66,7 +68,8 @@ export default function ProfileScreen() {
   const [contacts, setContacts]               = useState<ContactEntry[]>([]);
   const [contactsLoading, setContactsLoading] = useState(false);
   const [addContactOpen, setAddContactOpen]   = useState(false);
-  const [allUsers, setAllUsers]               = useState<Array<{ uid: string; displayName: string; avatarEmoji: string | null; avatarUrl: string | null }>>([]);
+  const [addContactSearch, setAddContactSearch] = useState('');
+  const [allUsers, setAllUsers]               = useState<Array<{ uid: string; displayName: string; email?: string | null; avatarEmoji: string | null; avatarUrl: string | null }>>([]);
 
   // Settings sheet state
   const [settingsOpen, setSettingsOpen]           = useState(false);
@@ -411,6 +414,7 @@ export default function ProfileScreen() {
                     {i > 0 && <CardDivider />}
                     <ContactRow
                       contact={c}
+                      onPress={() => (navigation as any).navigate('UserProfile', { uid: c.uid, displayName: c.displayName })}
                       onRemove={() => handleRemoveContact(c.uid)}
                     />
                   </View>
@@ -458,16 +462,45 @@ export default function ProfileScreen() {
       </BottomSheet>
 
       {/* ── Add Contact bottom sheet ── */}
-      <BottomSheet visible={addContactOpen} onClose={() => setAddContactOpen(false)}>
+      <BottomSheet visible={addContactOpen} onClose={() => { setAddContactOpen(false); setAddContactSearch(''); }}>
         <View style={styles.addContactSheet}>
           <Text style={styles.settingsTitle}>ADD CONTACT</Text>
-          {allUsers.filter((u) => !contactUidSet.has(u.uid)).length === 0 ? (
-            <EmptyState icon="👥" title="No users to add" />
+          {/* Search input */}
+          <View style={styles.addContactSearchBox}>
+            <Text style={styles.addContactSearchIcon}>🔍</Text>
+            <TextInput
+              style={styles.addContactSearchInput}
+              value={addContactSearch}
+              onChangeText={setAddContactSearch}
+              placeholder="Search by username or email..."
+              placeholderTextColor={Colors.muted}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
+          {allUsers.filter((u) => {
+            if (contactUidSet.has(u.uid)) return false;
+            if (!addContactSearch.trim()) return true;
+            const q = addContactSearch.trim().toLowerCase();
+            return (
+              u.displayName.toLowerCase().includes(q) ||
+              (u.email != null && u.email.toLowerCase().includes(q))
+            );
+          }).length === 0 ? (
+            <EmptyState icon="👥" title={addContactSearch ? 'No users found' : 'No users to add'} />
           ) : (
             <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
               <NmCard style={styles.listCard}>
                 {allUsers
-                  .filter((u) => !contactUidSet.has(u.uid))
+                  .filter((u) => {
+                    if (contactUidSet.has(u.uid)) return false;
+                    if (!addContactSearch.trim()) return true;
+                    const q = addContactSearch.trim().toLowerCase();
+                    return (
+                      u.displayName.toLowerCase().includes(q) ||
+                      (u.email != null && u.email.toLowerCase().includes(q))
+                    );
+                  })
                   .map((u, i, arr) => (
                     <View key={u.uid}>
                       {i > 0 && <CardDivider />}
@@ -528,9 +561,17 @@ function H2HRow({ rec, accent }: { rec: H2HRecord; accent: string }) {
 
 // ── Contact Row ───────────────────────────────────────────────────────────────
 
-function ContactRow({ contact, onRemove }: { contact: ContactEntry; onRemove: () => void }) {
+function ContactRow({
+  contact,
+  onPress,
+  onRemove,
+}: {
+  contact: ContactEntry;
+  onPress: () => void;
+  onRemove: () => void;
+}) {
   return (
-    <View style={styles.contactRow}>
+    <TouchableOpacity style={styles.contactRow} onPress={onPress} activeOpacity={0.75}>
       <Avatar
         uid={contact.uid}
         displayName={contact.displayName}
@@ -539,10 +580,15 @@ function ContactRow({ contact, onRemove }: { contact: ContactEntry; onRemove: ()
         uri={contact.avatarUrl}
       />
       <Text style={styles.contactName} numberOfLines={1}>@{contact.displayName}</Text>
-      <TouchableOpacity onPress={onRemove} style={styles.removeBtn} activeOpacity={0.7}>
+      <TouchableOpacity
+        onPress={(e) => { e.stopPropagation(); onRemove(); }}
+        style={styles.removeBtn}
+        activeOpacity={0.7}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
         <Text style={styles.removeText}>Remove</Text>
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -807,6 +853,24 @@ const styles = StyleSheet.create({
 
   // Add Contact Sheet
   addContactSheet: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxxl, gap: Spacing.md },
+  addContactSearchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.bg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 14,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  addContactSearchIcon: { fontSize: 13 },
+  addContactSearchInput: {
+    flex: 1,
+    color: Colors.text,
+    fontFamily: Typography.body,
+    fontSize: 14,
+  },
 
   // Log out
   logoutRow: { alignItems: 'center', paddingTop: Spacing.md },

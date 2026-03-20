@@ -78,7 +78,20 @@ These features significantly improve stickiness and repeat usage but don't block
 
 ---
 
-### 5. Rematch Button
+### 5. Home Feed Tabs (All / Contacts Only)
+**Why:** As the friend graph grows, the feed fills with content from people the user barely knows. A Contacts-only tab lets users focus on people they actually care about, improving signal-to-noise ratio.
+
+**Implementation notes:**
+- `TabSelector` at top of HomeScreen: "ALL" | "CONTACTS"
+- "ALL" tab = current behaviour (`getFeedPosts` — all posts, newest first)
+- "CONTACTS" tab = fetch current user's contact UIDs from Firestore, then either:
+  - Client-side filter: filter `getFeedPosts` results where `post.data.userId` is in contactUids (simple, works at small scale)
+  - Firestore query: `where('userId', 'in', contactUids)` — efficient but limited to 30 UIDs per query (use `in` batching for larger contact lists)
+- Persist selected tab to `AsyncStorage` so the preference survives app restarts
+
+---
+
+### 6. Rematch Button
 **Why:** The easiest way to create another wager is to replicate the last one. One tap from a settled wager should pre-fill NewWagerScreen with the same opponent, amount, and description.
 
 **Implementation notes:**
@@ -88,7 +101,7 @@ These features significantly improve stickiness and repeat usage but don't block
 
 ---
 
-### 6. Leaderboard
+### 7. Leaderboard
 **Why:** Ranked competition among friends is a core GoodGame hook — "who's up, who's down." This drives daily check-ins.
 
 **Views:**
@@ -104,7 +117,7 @@ These features significantly improve stickiness and repeat usage but don't block
 
 ---
 
-### 7. Post Interactions (Likes + Comments)
+### 8. Post Interactions (Likes + Comments)
 **Why:** The Home feed needs social engagement signals — likes give passive feedback, comments let friends talk trash on a specific post.
 
 **Current state:** `PostDoc` has `likes: number` and `comments: number` fields but neither is wired up.
@@ -116,7 +129,7 @@ These features significantly improve stickiness and repeat usage but don't block
 
 ---
 
-### 8. Dispute / Contest Flow
+### 9. Dispute / Contest Flow
 **Why:** What happens when both players disagree on who won? Currently either party can call `settleWager(wagerId, anyWinnerId)` with no verification. This is a trust issue at scale.
 
 **Options (pick one):**
@@ -131,7 +144,7 @@ These features significantly improve stickiness and repeat usage but don't block
 
 ---
 
-### 9. Wager Expiry Handling
+### 10. Wager Expiry Handling
 **Why:** Expired wagers (`status: 'expired'`) currently just sit in the Wagers tab with no resolution. Both users should be notified and the wager should be visually clearly dead.
 
 **Implementation notes:**
@@ -147,7 +160,7 @@ Nice-to-have features that improve the product but can wait until the core loop 
 
 ---
 
-### 10. Settings Screen
+### 11. Settings Screen
 **Why:** Users need a dedicated screen for account management beyond the profile settings sheet.
 
 **Settings to include:**
@@ -158,7 +171,7 @@ Nice-to-have features that improve the product but can wait until the core loop 
 
 ---
 
-### 11. Share / Deep Link (Invite Flow)
+### 12. Share / Deep Link (Invite Flow)
 **Why:** Growth. A user should be able to send a wager challenge link to someone not yet in the app — link opens to sign-up + pre-filled wager context.
 
 **Implementation notes:**
@@ -168,7 +181,7 @@ Nice-to-have features that improve the product but can wait until the core loop 
 
 ---
 
-### 12. Rich Media in Chat
+### 13. Rich Media in Chat
 **Why:** Send a wager card directly in a DM ("Rematch?"), share a screenshot, or celebrate a win with a meme in chat. Makes DMs much more fun than plain text.
 
 **Implementation notes:**
@@ -178,7 +191,7 @@ Nice-to-have features that improve the product but can wait until the core loop 
 
 ---
 
-### 13. Wallet Funding
+### 14. Wallet Funding
 **Why:** The `walletBalance` field exists but there's no way to put real money in. For real-money wagering, a payment layer is required.
 
 **Options:**
@@ -190,7 +203,7 @@ Nice-to-have features that improve the product but can wait until the core loop 
 
 ---
 
-### 14. Group Wagers
+### 15. Group Wagers
 **Why:** Let three or more friends bet on the same outcome — e.g., "Who calls the Super Bowl winner correctly?" The winner-takes-all pot is more exciting than 1:1.
 
 **Implementation notes:**
@@ -201,7 +214,7 @@ Nice-to-have features that improve the product but can wait until the core loop 
 
 ---
 
-### 15. Stories / Moments
+### 16. Stories / Moments
 **Why:** Ephemeral content (24-hour posts) tied to big wins, trash talk, or highlight reels. Drives daily opening habits.
 
 **Implementation notes:**

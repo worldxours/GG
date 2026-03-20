@@ -42,6 +42,7 @@ export async function createUserDoc(uid: string, email: string): Promise<void> {
     createdAt: serverTimestamp(),
     avatar: null,
     isAdmin: false,
+    email,               // stored for user search
   });
 }
 
@@ -50,13 +51,22 @@ export async function getUserDoc(uid: string): Promise<UserDoc | null> {
   return snap.exists() ? (snap.data() as UserDoc) : null;
 }
 
+// ── User picker type — used by getOtherUsers + searchUsers ───────────────────
+export interface UserPickerEntry {
+  uid: string;
+  displayName: string;
+  email: string | null;
+  avatarEmoji: string | null;
+  avatarUrl: string | null;
+}
+
 /**
  * Fetch all users except the current user.
- * Returns uid + displayName + avatar fields for the user picker.
+ * Returns uid + displayName + email + avatar fields for the user picker.
  */
 export async function getOtherUsers(
   currentUid: string,
-): Promise<Array<{ uid: string; displayName: string; avatarEmoji: string | null; avatarUrl: string | null }>> {
+): Promise<UserPickerEntry[]> {
   const snap = await getDocs(collection(db, 'users'));
   return snap.docs
     .filter((d) => d.id !== currentUid)
@@ -66,10 +76,29 @@ export async function getOtherUsers(
         uid:         d.id,
         // Prefer username (canonical @handle) over raw displayName
         displayName: data.username ?? data.displayName,
+        email:       data.email   ?? null,
         avatarEmoji: data.avatarEmoji ?? null,
         avatarUrl:   data.avatarUrl   ?? null,
       };
     });
+}
+
+/**
+ * Filter all users by a search query (username or email, case-insensitive).
+ * Returns all users when query is empty.
+ */
+export async function searchUsers(
+  query: string,
+  currentUid: string,
+): Promise<UserPickerEntry[]> {
+  const all = await getOtherUsers(currentUid);
+  if (!query.trim()) return all;
+  const q = query.trim().toLowerCase();
+  return all.filter(
+    (u) =>
+      u.displayName.toLowerCase().includes(q) ||
+      (u.email != null && u.email.toLowerCase().includes(q)),
+  );
 }
 
 /**

@@ -22,6 +22,7 @@ export interface UserDoc {
   createdAt: Timestamp;
   avatar: string | null;        // legacy field — superseded by avatarEmoji / avatarUrl
   isAdmin: boolean;
+  email?: string;               // Firebase Auth email — stored at createUserDoc time for search
 }
 
 export type WagerStatus = 'pending' | 'active' | 'settled' | 'declined' | 'expired';

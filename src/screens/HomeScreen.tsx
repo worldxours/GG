@@ -101,6 +101,12 @@ export default function HomeScreen() {
           <Wordmark size={24} letterSpacing={2} />
         </TouchableOpacity>
         <View style={styles.headerRight}>
+          <IconButton
+            icon="🔍"
+            showPip={false}
+            onPress={() => (navigation as any).navigate('Search')}
+            accessibilityLabel="Find people"
+          />
           <IconButton icon="🔔" showPip={false} accessibilityLabel="Notifications" />
           {currentUid ? (
             <Avatar uid={currentUid} displayName={userDoc?.displayName ?? ''} size={38} />
