@@ -384,28 +384,43 @@ export default function ProfileScreen() {
                     return (
                       <View key={u.uid}>
                         {i > 0 && <CardDivider />}
-                        <TouchableOpacity
-                          style={styles.addContactRow}
-                          activeOpacity={0.75}
-                          disabled={isPending}
-                          onPress={() => handleToggleContact(u, isContact)}
-                        >
-                          <Avatar
-                            uid={u.uid}
-                            displayName={u.displayName}
-                            size={36}
-                            emoji={u.avatarEmoji}
-                            uri={u.avatarUrl}
-                          />
-                          <Text style={styles.addContactName}>@{u.displayName}</Text>
+                        <View style={styles.addContactRow}>
+                          {/* Avatar + name → navigate to profile */}
+                          <TouchableOpacity
+                            style={styles.addContactIdentity}
+                            activeOpacity={0.75}
+                            onPress={() => {
+                              setAddContactOpen(false);
+                              setAddContactSearch('');
+                              (navigation as any).navigate('UserProfile', { uid: u.uid, displayName: u.displayName });
+                            }}
+                          >
+                            <Avatar
+                              uid={u.uid}
+                              displayName={u.displayName}
+                              size={36}
+                              emoji={u.avatarEmoji}
+                              uri={u.avatarUrl}
+                            />
+                            <Text style={styles.addContactName}>@{u.displayName}</Text>
+                          </TouchableOpacity>
+                          {/* +/− button → toggle contact only */}
                           {isPending ? (
                             <ActivityIndicator size="small" color={Colors.c1} />
-                          ) : isContact ? (
-                            <Text style={styles.removeIcon}>−</Text>
                           ) : (
-                            <Text style={styles.addIcon}>+</Text>
+                            <TouchableOpacity
+                              onPress={() => handleToggleContact(u, isContact)}
+                              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                              activeOpacity={0.7}
+                            >
+                              {isContact ? (
+                                <Text style={styles.removeIcon}>−</Text>
+                              ) : (
+                                <Text style={styles.addIcon}>+</Text>
+                              )}
+                            </TouchableOpacity>
                           )}
-                        </TouchableOpacity>
+                        </View>
                       </View>
                     );
                   })}
@@ -594,7 +609,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     gap: 10,
   },
-  addContactName: { flex: 1, fontFamily: Typography.bodyBold, fontSize: 13, color: Colors.text },
+  addContactIdentity: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  addContactName: { fontFamily: Typography.bodyBold, fontSize: 13, color: Colors.text },
   addIcon:    { fontSize: 22, color: Colors.c1, fontWeight: '700', width: 24, textAlign: 'center' },
   removeIcon: { fontSize: 22, color: Colors.loss, fontWeight: '700', width: 24, textAlign: 'center' },
 
