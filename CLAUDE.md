@@ -79,7 +79,7 @@ These were built before Phase 3 screens. AdminScreen was refactored to use `Scre
 | Component | Purpose |
 |---|---|
 | `<StatPill label value accent />` | Single stat display (label + value). Used 6-up on Wagers + Profile screens. |
-| `<PostCard post authorName opponentName />` | Polymorphic feed card — photo / meme / wager-challenge / wager-result. `PostWithId` type defined in `postService.ts`, re-exported from PostCard. |
+| `<PostCard post authorName opponentName onPressAuthor onPressOpponent onAccept onDecline />` | Polymorphic feed card — photo / meme / wager-challenge / wager-result. `PostWithId` type defined in `postService.ts`, re-exported from PostCard. Optional callbacks: `onPressAuthor(uid)` / `onPressOpponent(uid)` → navigate to UserProfile; `onAccept(wagerId)` / `onDecline(wagerId)` → shown on wager-challenge cards when the current user is the challenged party. |
 | `<ChatBubble message isMine />` | Message bubble. `NormalizedMessage` props (adapter type). Own: right-aligned, `Colors.c1` bg. Other: left-aligned, raised neomorphic. System messages: centred muted italic. |
 | `<H2HBanner myWins theirWins theirName />` | "You 3 – 1 Marcus" banner strip in chat detail and profile H2H rows. |
 
@@ -192,6 +192,10 @@ Knicks, Canucks, Flames, Raiders, Philadelphia Eagles, San Francisco 49ers
 - [x] Phase 5 — messageService (Firestore wager system messages), ChatBubble + H2HBanner components
 - [x] Phase 5B — CometChat integration: cometchat.ts, AuthContext CometChat lifecycle, ChatScreen (CometChat convo list), ChatDetailScreen (CometChat messages), NewConversationScreen; EAS Build configured
 - [x] Phase 6 — ProfileScreen (avatar, 6-up stats, H2H tab, Recent tab, settings sheet), ThemeContext (dynamic accent colour), updateUserProfile service, team theme picker (6 teams), stats visibility toggle
+- [x] Feature #2 — Wager acceptance from feed: PostCard `onAccept`/`onDecline` callbacks; HomeScreen guards `isChallengeToMe` and wires `acceptWager`/`declineWager`; optimistic card removal on accept/decline
+- [x] Feature #3 — UserProfileScreen: view-only profile for any user; loads `getUserDoc` + `getUserWagers` + `getH2H` in parallel; H2H tab (H2HBanner + shared wagers) and Recent tab; public/private stats; registered as `UserProfile` in nav stack
+- [x] Tappable author/opponent names on feed posts — PostCard `onPressAuthor(uid)` / `onPressOpponent(uid)` navigate to UserProfileScreen
+- [x] User search + contacts management — SearchScreen (🔍 in Home header): full user list with live query filter by username or email; optimistic Add/Remove contact toggle; tappable rows → UserProfileScreen; ProfileScreen Add Contact sheet gains search TextInput + tappable contact rows; `UserDoc.email` stored at signup; `getOtherUsers` returns email; `searchUsers(query, uid)` added to userService; `UserPickerEntry` interface
 
 ## What's Next
 - [ ] Push Notifications (FCM) — new challenge, challenge accepted, wager settled, new chat message (was originally part of Phase 6 scope, deferred)
@@ -244,10 +248,12 @@ The Chat tab uses **CometChat** (`@cometchat/chat-sdk-react-native`) for real-ti
 
 **Wager system messages** (accept/decline/settle events) are still written to Firestore `/wagers/{wagerId}/messages` via `messageService.ts`.
 
-### Navigation — ChatDetail params
+### Navigation — screen params
 ```ts
 ChatDetail:      { receiverUID: string; type: 'user' | 'group'; name: string }
 NewConversation: undefined
+UserProfile:     { uid: string; displayName?: string }
+Search:          undefined
 ```
 
 ---
@@ -255,8 +261,6 @@ NewConversation: undefined
 ## Prototype — What's NOT Yet in RN (future phases)
 - [ ] Push Notifications (FCM)
 - [ ] Notifications screen
-- [ ] User search / adding friends
-- [ ] Wager acceptance flow (from the feed challenge card)
 - [ ] Real photo upload posting to feed
 - [ ] Meme post posting to feed
 - [ ] Leaderboard screen

@@ -113,8 +113,12 @@ Before writing a screen in Phase N, scan the Tier 2/3 table above. Create any co
 
 ### `/users/{uid}`
 ```
-displayName       string
+username          string | null  (null = pending onboarding; set to lowercase @handle on completion)
+displayName       string         (mirrors username once onboarding is complete)
 fullName          string
+email             string         (optional — stored at createUserDoc time for user search)
+avatarEmoji       string | null  (emoji character shown when no photo uploaded)
+avatarUrl         string | null  (Firebase Storage download URL)
 walletBalance     number   (0)
 lifetimeWagered   number   (0)
 lifetimeWon       number   (0)
@@ -125,8 +129,11 @@ longestStreak     number   (0)
 statsVisibility   string   ("private" | "public")
 teamTheme         string   ("knicks" | "canucks" | "flames" | "raiders" | "eagles" | "49ers")
 createdAt         timestamp
-avatar            string   (url or null)
+avatar            string   (url or null — legacy field, superseded by avatarEmoji / avatarUrl)
+isAdmin           boolean
 ```
+
+**`/usernames/{username}`** — claim doc, lowercase username → `{ uid }`. Used to enforce unique handles.
 
 ### `/users/{uid}/deposits/{depositId}`
 ```
@@ -358,10 +365,10 @@ Reference: `screen-profile` in prototype
 
 #### Backlog (V2 — see FEATURES.md)
 - [ ] Push Notifications (FCM) — #1 priority
-- [ ] Wager acceptance from feed challenge card
-- [ ] Other-user profile view
+- [x] Wager acceptance from feed challenge card ✅
+- [x] Other-user profile view (UserProfileScreen) ✅
+- [x] User search / friend discovery (SearchScreen + enhanced Add Contact sheet) ✅
 - [ ] Notifications screen
-- [ ] User search / friend discovery
 - [ ] Real photo upload posting to feed
 - [ ] Meme post posting to feed
 - [ ] Leaderboard screen
@@ -411,8 +418,11 @@ Bottom Nav (visible on all screens except Auth, Admin, New Wager):
 
 From anywhere:
   Triple-tap GOODGAME → Admin screen (hidden, no nav item)
-  Tap wager card   → Chat detail for that wager
-  Tap user avatar  → Profile screen
+  Tap wager card      → Chat detail for that wager
+  Tap user avatar     → Profile screen (own) or UserProfileScreen (other user)
+  Tap author/opponent name on feed post → UserProfileScreen
+  🔍 in Home header   → SearchScreen (find people, add/remove contacts)
+  Tap contact row in ProfileScreen → UserProfileScreen
 ```
 
 ---
