@@ -24,9 +24,8 @@ import {
   EmptyState,
   CardDivider,
 } from '../components';
-import { getUserDoc } from '../lib/userService';
-import { getUserWagers, WagerWithId } from '../lib/wagerService';
-import { getUserDisplayNames } from '../lib/userService';
+import { getUserDoc, getUserDisplayNames } from '../lib/userService';
+import { getSharedWagers, WagerWithId } from '../lib/wagerService';
 import { getH2H } from '../lib/messageService';
 import { UserDoc } from '../types';
 
@@ -50,45 +49,29 @@ export default function UserProfileScreen() {
 
   const { uid, displayName: hintName = '' } = route.params;
 
-  const [profileDoc, setProfileDoc]   = useState<UserDoc | null>(null);
-  const [wagers, setWagers]           = useState<WagerWithId[]>([]);
-  const [sharedWagers, setSharedWagers] = useState<WagerWithId[]>([]);
-  const [nameMap, setNameMap]         = useState<Map<string, string>>(new Map());
-  const [h2h, setH2H]                 = useState<{ myWins: number; theirWins: number; totalWagers: number } | null>(null);
-  const [loading, setLoading]         = useState(true);
-  const [tab, setTab]                 = useState<ProfileTab>('h2h');
+  const [profileDoc, setProfileDoc] = useState<UserDoc | null>(null);
+  const [wagers, setWagers]         = useState<WagerWithId[]>([]);
+  const [nameMap, setNameMap]       = useState<Map<string, string>>(new Map());
+  const [h2h, setH2H]               = useState<{ myWins: number; theirWins: number; totalWagers: number } | null>(null);
+  const [loading, setLoading]       = useState(true);
+  const [tab, setTab]               = useState<ProfileTab>('h2h');
 
   const loadData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const [doc, allWagers, h2hRec] = await Promise.all([
+      const [doc, sharedWagers, h2hRec] = await Promise.all([
         getUserDoc(uid),
-        getUserWagers(uid),
+        getSharedWagers(user.uid, uid),
         getH2H(user.uid, uid),
       ]);
 
       setProfileDoc(doc);
       setH2H(h2hRec);
+      setWagers(sharedWagers);
 
-      // Resolve names for all opponents
-      const oppUids = [
-        ...new Set(
-          allWagers.map((w) =>
-            w.data.creatorId === uid ? w.data.opp : w.data.creatorId,
-          ),
-        ),
-      ];
-      const names = await getUserDisplayNames([...oppUids, uid]);
+      const names = await getUserDisplayNames([user.uid, uid]);
       setNameMap(names);
-
-      setWagers(allWagers.slice(0, 20));
-
-      // Wagers shared between the current user and this profile
-      const shared = allWagers.filter(
-        (w) => w.data.creatorId === user.uid || w.data.opp === user.uid,
-      );
-      setSharedWagers(shared);
     } catch (e) {
       console.error('UserProfileScreen: loadData error', e);
     } finally {
@@ -213,11 +196,11 @@ export default function UserProfileScreen() {
                   theirWins={h2h.theirWins}
                   theirName={displayName}
                 />
-                {sharedWagers.length > 0 ? (
+                {wagers.length > 0 ? (
                   <>
                     <Text style={styles.sectionLabel}>SHARED WAGERS</Text>
                     <View style={styles.wagerList}>
-                      {sharedWagers.map((w) => (
+                      {wagers.map((w) => (
                         <WagerCard key={w.id} wager={toCardData(w)} compact />
                       ))}
                     </View>

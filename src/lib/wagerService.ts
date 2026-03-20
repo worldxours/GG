@@ -290,3 +290,37 @@ export async function getUserWagers(uid: string): Promise<WagerWithId[]> {
     return bTs - aTs;
   });
 }
+
+// ── getSharedWagers ───────────────────────────────────────────────────────────
+/**
+ * Fetch wagers shared between two specific users.
+ *
+ * Only returns wagers where myUid is a participant, so this always satisfies
+ * the Firestore rule (which requires request.auth.uid == creatorId or opp).
+ * Safe to call when viewing another user's profile.
+ */
+export async function getSharedWagers(myUid: string, theirUid: string): Promise<WagerWithId[]> {
+  const [iCreatedSnap, theyCreatedSnap] = await Promise.all([
+    getDocs(query(
+      collection(db, 'wagers'),
+      where('creatorId', '==', myUid),
+      where('opp', '==', theirUid),
+    )),
+    getDocs(query(
+      collection(db, 'wagers'),
+      where('creatorId', '==', theirUid),
+      where('opp', '==', myUid),
+    )),
+  ]);
+
+  const result: WagerWithId[] = [
+    ...iCreatedSnap.docs.map((d) => ({ id: d.id, data: d.data() as WagerDoc })),
+    ...theyCreatedSnap.docs.map((d) => ({ id: d.id, data: d.data() as WagerDoc })),
+  ];
+
+  return result.sort((a, b) => {
+    const aTs = (a.data.createdAt as any)?.seconds ?? 0;
+    const bTs = (b.data.createdAt as any)?.seconds ?? 0;
+    return bTs - aTs;
+  });
+}

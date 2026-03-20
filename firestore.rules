@@ -36,6 +36,14 @@ service cloud.firestore {
         allow create: if isAdmin();
         allow update, delete: if false;
       }
+
+      // ── Contacts subcollection ─────────────────────────────────────────────
+      // Only the owner can read, add, or remove their own contacts.
+      match /contacts/{contactId} {
+        allow read:          if isOwner(uid);
+        allow create, update: if isOwner(uid);
+        allow delete:        if isOwner(uid);
+      }
     }
 
     // ── Deposits collectionGroup ───────────────────────────────────────────

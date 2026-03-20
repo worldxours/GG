@@ -39,6 +39,7 @@ src/
 5. **Services are pure functions.** `src/lib/` files contain only Firestore/Firebase calls — no `useState`, no navigation. Screens call service functions.
 6. **TypeScript strict — 0 errors before any commit.** Run `npx tsc --noEmit` before marking a phase complete.
 7. **Dynamic accent colour.** Never hardcode `Colors.c1` in components that should follow team theme. Use `useTheme().accent` instead — it returns the team accent (or purple default). `PrimaryButton`, the FAB, and nav label all use this.
+8. **Test after every change — visual AND console.** After implementing any feature or fix: (a) navigate to the affected screen in the preview, (b) open `preview_console_logs` filtered to `level: "error"`, and (c) confirm zero errors before marking the task done. Visual confirmation alone is not sufficient — Firestore permission errors, undefined references, and type mismatches only appear in the console.
 
 ---
 
@@ -193,9 +194,10 @@ Knicks, Canucks, Flames, Raiders, Philadelphia Eagles, San Francisco 49ers
 - [x] Phase 5B — CometChat integration: cometchat.ts, AuthContext CometChat lifecycle, ChatScreen (CometChat convo list), ChatDetailScreen (CometChat messages), NewConversationScreen; EAS Build configured
 - [x] Phase 6 — ProfileScreen (avatar, 6-up stats, H2H tab, Recent tab, settings sheet), ThemeContext (dynamic accent colour), updateUserProfile service, team theme picker (6 teams), stats visibility toggle
 - [x] Feature #2 — Wager acceptance from feed: PostCard `onAccept`/`onDecline` callbacks; HomeScreen guards `isChallengeToMe` and wires `acceptWager`/`declineWager`; optimistic card removal on accept/decline
-- [x] Feature #3 — UserProfileScreen: view-only profile for any user; loads `getUserDoc` + `getUserWagers` + `getH2H` in parallel; H2H tab (H2HBanner + shared wagers) and Recent tab; public/private stats; registered as `UserProfile` in nav stack
+- [x] Feature #3 — UserProfileScreen: view-only profile for any user; loads `getUserDoc` + `getSharedWagers` + `getH2H` in parallel; H2H tab (H2HBanner + shared wagers) and Recent tab; public/private stats; registered as `UserProfile` in nav stack
 - [x] Tappable author/opponent names on feed posts — PostCard `onPressAuthor(uid)` / `onPressOpponent(uid)` navigate to UserProfileScreen
 - [x] User search + contacts management — SearchScreen (🔍 in Home header): full user list with live query filter by username or email; optimistic Add/Remove contact toggle; tappable rows → UserProfileScreen; ProfileScreen Add Contact sheet gains search TextInput + tappable contact rows; `UserDoc.email` stored at signup; `getOtherUsers` returns email; `searchUsers(query, uid)` added to userService; `UserPickerEntry` interface
+- [x] Settings screen — dedicated push screen replacing ProfileScreen BottomSheet; sections: PROFILE (avatar emoji, username w/ debounced availability check, full name, team theme, stats visibility, Save), ACCOUNT (Change Password via Firebase re-auth BottomSheet, Log Out), DANGER ZONE (Delete Account via re-auth BottomSheet); contacts PEOPLE sheet now shows all users with `+`/`−` toggle and optimistic UI; Firestore contacts subcollection rules deployed
 
 ## What's Next
 - [ ] Push Notifications (FCM) — new challenge, challenge accepted, wager settled, new chat message (was originally part of Phase 6 scope, deferred)
