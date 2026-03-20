@@ -43,6 +43,8 @@ interface PostCardProps {
   style?: ViewStyle;
   /** Called when the author avatar / name is tapped — navigate to their profile */
   onPressAuthor?: (uid: string) => void;
+  /** Called when the opponent name is tapped on wager posts — navigate to their profile */
+  onPressOpponent?: (uid: string) => void;
   /** Called when the viewer is the challenged opponent and taps Accept */
   onAccept?: (wagerId: string) => void;
   /** Called when the viewer is the challenged opponent and taps Decline */
@@ -67,6 +69,7 @@ export default function PostCard({
   opponentName = 'Opponent',
   style,
   onPressAuthor,
+  onPressOpponent,
   onAccept,
   onDecline,
 }: PostCardProps) {
@@ -117,6 +120,11 @@ export default function PostCard({
           category={null}
           onAccept={onAccept}
           onDecline={onDecline}
+          onPressOpponent={
+            onPressOpponent && data.opponentId
+              ? () => onPressOpponent(data.opponentId!)
+              : undefined
+          }
         />
       )}
       {data.type === 'wager-result' && (
@@ -124,6 +132,11 @@ export default function PostCard({
           won={data.won}
           amount={data.amount}
           opponentName={opponentName}
+          onPressOpponent={
+            onPressOpponent && data.opponentId
+              ? () => onPressOpponent(data.opponentId!)
+              : undefined
+          }
         />
       )}
 
@@ -197,6 +210,7 @@ function WagerChallengeBody({
   category,
   onAccept,
   onDecline,
+  onPressOpponent,
 }: {
   wagerId: string | null;
   opponentName: string;
@@ -205,6 +219,7 @@ function WagerChallengeBody({
   category: string | null;
   onAccept?: (wagerId: string) => void;
   onDecline?: (wagerId: string) => void;
+  onPressOpponent?: () => void;
 }) {
   const accent = category ? (CATEGORY_COLOR[category] ?? Colors.c1) : Colors.c1;
   const showActions = !!(wagerId && (onAccept || onDecline));
@@ -215,7 +230,11 @@ function WagerChallengeBody({
         <View style={styles.wagerChallengeText}>
           <Text style={styles.wagerChallengeLabel}>
             Challenged{' '}
-            <Text style={[styles.wagerChallengeName, { color: accent }]}>
+            <Text
+              style={[styles.wagerChallengeName, { color: accent }]}
+              onPress={onPressOpponent}
+              suppressHighlighting
+            >
               {opponentName}
             </Text>
             {amount !== null ? (
@@ -262,10 +281,12 @@ function WagerResultBody({
   won,
   amount,
   opponentName,
+  onPressOpponent,
 }: {
   won: boolean | null;
   amount: number | null;
   opponentName: string;
+  onPressOpponent?: () => void;
 }) {
   const isWin = won === true;
   return (
@@ -280,7 +301,13 @@ function WagerResultBody({
               : ` -$${amount}`
           ) : ''}
         </Text>
-        <Text style={styles.wagerResultOpp}>vs {opponentName}</Text>
+        <Text
+          style={[styles.wagerResultOpp, onPressOpponent && styles.wagerResultOppTappable]}
+          onPress={onPressOpponent}
+          suppressHighlighting
+        >
+          vs {opponentName}
+        </Text>
       </View>
     </View>
   );
@@ -482,5 +509,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.muted,
     marginTop: 2,
+  },
+  wagerResultOppTappable: {
+    color: Colors.dim,
+    textDecorationLine: 'underline',
   },
 });

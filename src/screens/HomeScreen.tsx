@@ -156,6 +156,7 @@ export default function HomeScreen() {
                   opponentName={opponentName}
                   style={styles.postCard}
                   onPressAuthor={handlePressAuthor}
+                  onPressOpponent={post.data.opponentId ? handlePressAuthor : undefined}
                   onAccept={isChallengeToMe ? handleAccept : undefined}
                   onDecline={isChallengeToMe ? handleDecline : undefined}
                 />
