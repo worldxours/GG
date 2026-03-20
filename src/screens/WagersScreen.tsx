@@ -281,20 +281,15 @@ export default function WagersScreen() {
                       <WagerCard
                         wager={cardData}
                         compact
-                        onPress={
-                          isIncoming
-                            ? () => {
-                              const name = nameMap.get(w.data.creatorId) ?? '';
-                              (navigation as any).navigate('UserProfile', { uid: w.data.creatorId, displayName: name });
-                            }
-                            : w.data.status === 'active'
-                              ? () => {
-                                const opponentId = w.data.creatorId === currentUid ? w.data.opp : w.data.creatorId;
-                                const opponentName = nameMap.get(opponentId) ?? opponentId.slice(-6);
-                                (navigation as any).navigate('ChatDetail', { receiverUID: opponentId, type: 'user', name: opponentName });
-                              }
-                              : undefined
-                        }
+                        onPress={() => {
+                          const opponentId = w.data.creatorId === currentUid ? w.data.opp : w.data.creatorId;
+                          const opponentName = nameMap.get(opponentId) ?? opponentId.slice(-6);
+                          if (w.data.status === 'active') {
+                            (navigation as any).navigate('ChatDetail', { receiverUID: opponentId, type: 'user', name: opponentName });
+                          } else {
+                            (navigation as any).navigate('UserProfile', { uid: opponentId, displayName: opponentName });
+                          }
+                        }}
                       />
 
                       {isIncoming && (

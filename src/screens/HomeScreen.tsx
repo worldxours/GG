@@ -9,6 +9,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { Colors, Spacing } from '../theme';
 import { useAuth } from '../context/AuthContext';
@@ -61,6 +62,10 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => { loadFeed(); }, [loadFeed]);
+
+  // Reload whenever the screen comes into focus — ensures new posts and
+  // wager status changes (accept/decline) are reflected immediately.
+  useFocusEffect(useCallback(() => { loadFeed(); }, [loadFeed]));
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

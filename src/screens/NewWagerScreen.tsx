@@ -119,9 +119,8 @@ export default function NewWagerScreen() {
 
       await refreshUserDoc();
 
-      // Navigate to the new wager's chat detail
-      navigation.goBack();
-      (navigation as any).navigate('ChatDetail', { wagerId });
+      // Dismiss modal and land on the Wagers tab
+      (navigation as any).navigate('Main', { screen: 'Wagers' });
     } catch (e: any) {
       Alert.alert(
         'Could not create wager',
