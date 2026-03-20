@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -27,6 +28,7 @@ import {
 import { getUserDoc, getUserDisplayNames } from '../lib/userService';
 import { getSharedWagers, WagerWithId } from '../lib/wagerService';
 import { getH2H } from '../lib/messageService';
+import { checkIsContact, addContact, removeContact } from '../lib/contactService';
 import { UserDoc } from '../types';
 
 // ── Route params ──────────────────────────────────────────────────────────────
@@ -56,19 +58,25 @@ export default function UserProfileScreen() {
   const [loading, setLoading]       = useState(true);
   const [tab, setTab]               = useState<ProfileTab>('h2h');
 
+  // Contact state
+  const [isContact, setIsContact]           = useState(false);
+  const [contactPending, setContactPending] = useState(false);
+
   const loadData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const [doc, sharedWagers, h2hRec] = await Promise.all([
+      const [doc, sharedWagers, h2hRec, contactStatus] = await Promise.all([
         getUserDoc(uid),
         getSharedWagers(user.uid, uid),
         getH2H(user.uid, uid),
+        checkIsContact(user.uid, uid),
       ]);
 
       setProfileDoc(doc);
       setH2H(h2hRec);
       setWagers(sharedWagers);
+      setIsContact(contactStatus);
 
       const names = await getUserDisplayNames([user.uid, uid]);
       setNameMap(names);
@@ -80,6 +88,26 @@ export default function UserProfileScreen() {
   }, [uid, user]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  // ── Toggle contact ─────────────────────────────────────────────────────────
+  const handleToggleContact = async () => {
+    if (!user || contactPending) return;
+    setContactPending(true);
+    const wasContact = isContact;
+    setIsContact(!wasContact); // optimistic
+    try {
+      if (wasContact) {
+        await removeContact(user.uid, uid);
+      } else {
+        await addContact(user.uid, uid);
+      }
+    } catch (e) {
+      setIsContact(wasContact); // revert on failure
+      console.error('UserProfileScreen: toggleContact error', e);
+    } finally {
+      setContactPending(false);
+    }
+  };
 
   // ── Derived values ─────────────────────────────────────────────────────────
   const displayName  = profileDoc?.displayName ?? (hintName || uid.slice(-6));
@@ -146,6 +174,27 @@ export default function UserProfileScreen() {
               ) : null}
             </View>
           </View>
+
+          {/* ── Contact button ── */}
+          <TouchableOpacity
+            style={[
+              styles.contactBtn,
+              isContact
+                ? { backgroundColor: tint, borderColor: tint2 }
+                : { backgroundColor: accent, borderColor: accent },
+            ]}
+            onPress={handleToggleContact}
+            disabled={contactPending}
+            activeOpacity={0.8}
+          >
+            {contactPending ? (
+              <ActivityIndicator size="small" color={isContact ? accent : Colors.btnText} />
+            ) : (
+              <Text style={[styles.contactBtnText, { color: isContact ? accent : Colors.btnText }]}>
+                {isContact ? '− Remove Contact' : '+ Add Contact'}
+              </Text>
+            )}
+          </TouchableOpacity>
 
           {/* ── Stats — visible only if public ── */}
           {showStats ? (
@@ -265,6 +314,22 @@ const styles = StyleSheet.create({
     fontFamily: Typography.body,
     fontSize: 13,
     color: Colors.dim,
+  },
+
+  // Contact button
+  contactBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderRadius: 18,
+    paddingVertical: 11,
+    minHeight: 44,
+  },
+  contactBtnText: {
+    fontFamily: Typography.heading,
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 
   // Stats

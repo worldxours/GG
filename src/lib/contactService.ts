@@ -12,6 +12,7 @@ import {
   setDoc,
   deleteDoc,
   getDocs,
+  getDoc,
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from './firebase';
@@ -48,6 +49,12 @@ export async function addContact(uid: string, contactUid: string): Promise<void>
 /** Remove a user from the current user's contacts. */
 export async function removeContact(uid: string, contactUid: string): Promise<void> {
   await deleteDoc(doc(db, 'users', uid, 'contacts', contactUid));
+}
+
+/** Check whether contactUid is in myUid's contacts list. */
+export async function checkIsContact(myUid: string, contactUid: string): Promise<boolean> {
+  const snap = await getDoc(doc(db, 'users', myUid, 'contacts', contactUid));
+  return snap.exists();
 }
 
 /** Fetch all contacts for a user, sorted newest-first. */
