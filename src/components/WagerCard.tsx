@@ -108,16 +108,6 @@ export default function WagerCard({
       }
       {showActions && (
         <View style={styles.actionRow}>
-          {onDecline && (
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.declineBtn]}
-              onPress={() => onDecline(wager.id)}
-              disabled={actionLoading}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.declineText}>Decline</Text>
-            </TouchableOpacity>
-          )}
           {onAccept && (
             <TouchableOpacity
               style={[styles.actionBtn, styles.acceptBtn]}
@@ -129,6 +119,16 @@ export default function WagerCard({
                 ? <ActivityIndicator color="#fff" size="small" />
                 : <Text style={styles.acceptText}>Accept</Text>
               }
+            </TouchableOpacity>
+          )}
+          {onDecline && (
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.declineBtn]}
+              onPress={() => onDecline(wager.id)}
+              disabled={actionLoading}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.declineText}>Decline</Text>
             </TouchableOpacity>
           )}
         </View>
