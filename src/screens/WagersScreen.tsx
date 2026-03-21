@@ -290,31 +290,10 @@ export default function WagersScreen() {
                             (navigation as any).navigate('UserProfile', { uid: opponentId, displayName: opponentName });
                           }
                         }}
+                        onAccept={isIncoming ? handleAccept : undefined}
+                        onDecline={isIncoming ? handleDecline : undefined}
+                        actionLoading={isBusy}
                       />
-
-                      {isIncoming && (
-                        <View style={styles.actionRow}>
-                          <TouchableOpacity
-                            style={[styles.actionBtn, styles.acceptBtn]}
-                            onPress={() => handleAccept(w.id)}
-                            disabled={isBusy}
-                            activeOpacity={0.85}
-                          >
-                            {isBusy
-                              ? <ActivityIndicator color="#fff" size="small" />
-                              : <Text style={styles.acceptText}>Accept</Text>
-                            }
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={[styles.actionBtn, styles.declineBtn]}
-                            onPress={() => handleDecline(w.id)}
-                            disabled={isBusy}
-                            activeOpacity={0.85}
-                          >
-                            <Text style={styles.declineText}>Decline</Text>
-                          </TouchableOpacity>
-                        </View>
-                      )}
 
                       {tab === 'settled' && (
                         <View style={styles.resultRow}>
@@ -392,20 +371,6 @@ const styles = StyleSheet.create({
 
   listCard: { paddingHorizontal: 0, paddingVertical: 0, overflow: 'hidden' },
   wagerRow: { paddingHorizontal: Spacing.md },
-
-  actionRow:   { flexDirection: 'row', gap: 8, paddingTop: 8, paddingBottom: 12 },
-  actionBtn:   { flex: 1, paddingVertical: 10, borderRadius: Radius.md, alignItems: 'center' },
-  acceptBtn: {
-    backgroundColor: Colors.win,
-    shadowColor: Colors.win,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  acceptText:  { fontSize: 13, fontWeight: '700', color: '#fff' },
-  declineBtn:  { backgroundColor: Colors.bg, borderWidth: 1, borderColor: Colors.border },
-  declineText: { fontSize: 13, fontWeight: '600', color: Colors.muted },
 
   errorBanner: {
     flexDirection: 'row',

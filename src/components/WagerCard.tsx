@@ -3,6 +3,7 @@ import {
   View,
   Text,
   TouchableOpacity,
+  ActivityIndicator,
   StyleSheet,
   ViewStyle,
 } from 'react-native';
@@ -18,7 +19,8 @@ export interface WagerCardData {
   desc: string;
   amount: number;
   status: WagerStatus;
-  category: WagerCategory;
+  /** Optional — defaults to Sports accent when omitted (e.g. when built from a feed post) */
+  category?: WagerCategory;
   expiresAt?: string;
   creatorId: string;
   creatorName: string;
@@ -32,13 +34,21 @@ export interface WagerCardData {
 interface WagerCardProps {
   wager: WagerCardData;
   /**
-   * compact — single-row list card (Wagers tab, Chat list row)
+   * compact — single-row list card (Wagers tab, Chat list row, feed challenge)
    * full    — expanded card (Chat pinned card, New Wager preview)
    * Default: false (full)
    */
   compact?: boolean;
   onPress?: () => void;
   style?: ViewStyle;
+  /**
+   * Accept/Decline callbacks — when provided the card renders an action row
+   * at the bottom. Intended for incoming (isIncoming) wagers only.
+   */
+  onAccept?: (wagerId: string) => void;
+  onDecline?: (wagerId: string) => void;
+  /** Shows a spinner on the Accept button while the action is in flight. */
+  actionLoading?: boolean;
 }
 
 // ── Category accent colours ───────────────────────────────────────────────────
@@ -53,14 +63,15 @@ const CATEGORY_COLOR: Record<WagerCategory, string> = {
  * WagerCard — the most-reused component in the app.
  *
  * Appears in:
- *   - Wagers tab (compact list rows)
+ *   - Wagers tab (compact list rows, with optional accept/decline actions)
+ *   - Feed wager-challenge posts (compact, with optional accept/decline actions)
  *   - Chat list (compact rows)
  *   - Chat detail (full pinned card — always at top, never scrolls away)
  *   - New Wager form (full preview card — live-updating as user types)
- *   - Feed (wager-challenge and wager-result posts — handled by PostCard, not this)
  *
  * Compact mode layout:
  *   [avatar] [desc + meta row] [amount + badge]
+ *   [Accept] [Decline]  ← only when onAccept/onDecline are provided
  *
  * Full mode layout:
  *   [category tag]
@@ -70,7 +81,15 @@ const CATEGORY_COLOR: Record<WagerCategory, string> = {
  *
  * The left border accent colour is derived from the wager category.
  */
-export default function WagerCard({ wager, compact = false, onPress, style }: WagerCardProps) {
+export default function WagerCard({
+  wager,
+  compact = false,
+  onPress,
+  style,
+  onAccept,
+  onDecline,
+  actionLoading = false,
+}: WagerCardProps) {
   const isMine = wager.currentUid === wager.creatorId;
   const myName = isMine ? 'You' : wager.creatorName;
   const theirName = isMine ? wager.oppName : wager.creatorName;
@@ -78,11 +97,44 @@ export default function WagerCard({ wager, compact = false, onPress, style }: Wa
   const theirId = isMine ? wager.oppId : wager.creatorId;
   const theirDisplayName = isMine ? wager.oppName : wager.creatorName;
 
-  const accentColor = CATEGORY_COLOR[wager.category] ?? Colors.c1;
+  const accentColor = wager.category ? (CATEGORY_COLOR[wager.category] ?? Colors.c1) : Colors.c1;
+  const showActions = !!(onAccept || onDecline);
 
-  const card = compact
-    ? <CompactCard wager={wager} theirId={theirId} theirDisplayName={theirDisplayName} accentColor={accentColor} />
-    : <FullCard wager={wager} myId={myId} myName={myName} theirId={theirId} theirName={theirName} accentColor={accentColor} />;
+  const innerContent = (
+    <>
+      {compact
+        ? <CompactCard wager={wager} theirId={theirId} theirDisplayName={theirDisplayName} accentColor={accentColor} />
+        : <FullCard wager={wager} myId={myId} myName={myName} theirId={theirId} theirName={theirName} accentColor={accentColor} />
+      }
+      {showActions && (
+        <View style={styles.actionRow}>
+          {onDecline && (
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.declineBtn]}
+              onPress={() => onDecline(wager.id)}
+              disabled={actionLoading}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.declineText}>Decline</Text>
+            </TouchableOpacity>
+          )}
+          {onAccept && (
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.acceptBtn]}
+              onPress={() => onAccept(wager.id)}
+              disabled={actionLoading}
+              activeOpacity={0.85}
+            >
+              {actionLoading
+                ? <ActivityIndicator color="#fff" size="small" />
+                : <Text style={styles.acceptText}>Accept</Text>
+              }
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+    </>
+  );
 
   if (onPress) {
     return (
@@ -91,14 +143,14 @@ export default function WagerCard({ wager, compact = false, onPress, style }: Wa
         onPress={onPress}
         activeOpacity={0.85}
       >
-        {card}
+        {innerContent}
       </TouchableOpacity>
     );
   }
 
   return (
     <View style={[styles.cardBase, { borderLeftColor: accentColor }, style]}>
-      {card}
+      {innerContent}
     </View>
   );
 }
@@ -160,9 +212,11 @@ function FullCard({
   return (
     <View>
       {/* Category tag */}
-      <Text style={[styles.categoryTag, { color: accentColor }]}>
-        {wager.category.toUpperCase()}
-      </Text>
+      {wager.category ? (
+        <Text style={[styles.categoryTag, { color: accentColor }]}>
+          {wager.category.toUpperCase()}
+        </Text>
+      ) : null}
 
       {/* VS row — avatars + amount */}
       <View style={styles.fullVsRow}>
@@ -314,5 +368,41 @@ const styles = StyleSheet.create({
     color: Colors.muted,
     flex: 1,
     textAlign: 'right',
+  },
+
+  // ── Action row (accept / decline) ────────────────────────────────────────
+  actionRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: Spacing.sm,
+  },
+  actionBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+  },
+  acceptBtn: {
+    backgroundColor: Colors.win,
+    shadowColor: Colors.win,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  acceptText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  declineBtn: {
+    backgroundColor: Colors.bg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  declineText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.muted,
   },
 });

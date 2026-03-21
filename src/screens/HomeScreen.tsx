@@ -165,6 +165,7 @@ export default function HomeScreen() {
                   post={post}
                   authorName={authorName}
                   opponentName={opponentName}
+                  currentUid={currentUid}
                   style={styles.postCard}
                   onPressAuthor={handlePressAuthor}
                   onPressOpponent={post.data.opponentId ? handlePressAuthor : undefined}

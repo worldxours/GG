@@ -9,18 +9,11 @@ import {
 } from 'react-native';
 import { Colors, Spacing, Radius, Typography } from '../theme';
 import Avatar from './Avatar';
+import WagerCard from './WagerCard';
 import { PostWithId } from '../lib/postService';
 
 // Re-export so callers can do: import { PostCard, PostWithId } from '../components'
 export type { PostWithId };
-
-// ── Category accent colours (mirrors WagerCard) ───────────────────────────────
-const CATEGORY_COLOR: Record<string, string> = {
-  Sports:   Colors.c1,
-  Awards:   '#ec4899',
-  Politics: '#f59e0b',
-  Custom:   Colors.c2,
-};
 
 // ── Relative time ─────────────────────────────────────────────────────────────
 function relativeTime(ts: any): string {
@@ -40,6 +33,8 @@ interface PostCardProps {
   authorName: string;
   /** Resolved display name for post.data.opponentId (wager posts) */
   opponentName?: string;
+  /** UID of the currently signed-in user — used to decide whether to show accept/decline */
+  currentUid?: string;
   style?: ViewStyle;
   /** Called when the author avatar / name is tapped — navigate to their profile */
   onPressAuthor?: (uid: string) => void;
@@ -67,6 +62,7 @@ export default function PostCard({
   post,
   authorName,
   opponentName = 'Opponent',
+  currentUid,
   style,
   onPressAuthor,
   onPressOpponent,
@@ -111,21 +107,30 @@ export default function PostCard({
           botText={data.botText}
         />
       )}
-      {data.type === 'wager-challenge' && (
-        <WagerChallengeBody
-          wagerId={data.wagerId}
-          opponentName={opponentName}
-          amount={data.amount}
-          caption={data.caption}
-          category={null}
-          onAccept={onAccept}
-          onDecline={onDecline}
-          onPressOpponent={
-            onPressOpponent && data.opponentId
-              ? () => onPressOpponent(data.opponentId!)
-              : undefined
-          }
-        />
+      {data.type === 'wager-challenge' && data.wagerId && (
+        <View style={styles.wagerCardWrap}>
+          <WagerCard
+            compact
+            wager={{
+              id:          data.wagerId,
+              desc:        data.caption ?? '',
+              amount:      data.amount ?? 0,
+              status:      'pending',
+              creatorId:   data.userId,
+              creatorName: authorName,
+              oppId:       data.opponentId ?? '',
+              oppName:     opponentName,
+              currentUid:  currentUid ?? '',
+            }}
+            onAccept={onAccept}
+            onDecline={onDecline}
+            onPress={
+              onPressOpponent && data.opponentId
+                ? () => onPressOpponent!(data.opponentId!)
+                : undefined
+            }
+          />
+        </View>
       )}
       {data.type === 'wager-result' && (
         <WagerResultBody
@@ -196,81 +201,6 @@ function MemeBody({
       ) : null}
       {botText ? (
         <Text style={[styles.memeText, styles.memeTextBot]}>{botText.toUpperCase()}</Text>
-      ) : null}
-    </View>
-  );
-}
-
-// ── Wager-challenge body ──────────────────────────────────────────────────────
-function WagerChallengeBody({
-  wagerId,
-  opponentName,
-  amount,
-  caption,
-  category,
-  onAccept,
-  onDecline,
-  onPressOpponent,
-}: {
-  wagerId: string | null;
-  opponentName: string;
-  amount: number | null;
-  caption: string | null;
-  category: string | null;
-  onAccept?: (wagerId: string) => void;
-  onDecline?: (wagerId: string) => void;
-  onPressOpponent?: () => void;
-}) {
-  const accent = category ? (CATEGORY_COLOR[category] ?? Colors.c1) : Colors.c1;
-  const showActions = !!(wagerId && (onAccept || onDecline));
-  return (
-    <View style={styles.wagerChallengeBody}>
-      <View style={styles.wagerChallengeRow}>
-        <Text style={styles.wagerChallengeIcon}>🎯</Text>
-        <View style={styles.wagerChallengeText}>
-          <Text style={styles.wagerChallengeLabel}>
-            Challenged{' '}
-            <Text
-              style={[styles.wagerChallengeName, { color: accent }]}
-              onPress={onPressOpponent}
-              suppressHighlighting
-            >
-              {opponentName}
-            </Text>
-            {amount !== null ? (
-              <Text style={styles.wagerChallengeAmount}> · ${amount} each</Text>
-            ) : null}
-          </Text>
-          {caption ? (
-            <Text style={styles.wagerChallengeCaption} numberOfLines={2}>
-              "{caption}"
-            </Text>
-          ) : null}
-        </View>
-      </View>
-
-      {/* ── Accept / Decline — only shown to the challenged party ── */}
-      {showActions ? (
-        <View style={styles.wagerActionsRow}>
-          {onDecline ? (
-            <TouchableOpacity
-              style={[styles.wagerActionBtn, styles.wagerDeclineBtn]}
-              onPress={() => onDecline(wagerId!)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.wagerDeclineText}>Decline</Text>
-            </TouchableOpacity>
-          ) : null}
-          {onAccept ? (
-            <TouchableOpacity
-              style={[styles.wagerActionBtn, styles.wagerAcceptBtn]}
-              onPress={() => onAccept(wagerId!)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.wagerAcceptText}>Accept 🤝</Text>
-            </TouchableOpacity>
-          ) : null}
-        </View>
       ) : null}
     </View>
   );
@@ -409,75 +339,10 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
 
-  // Wager challenge
-  wagerChallengeBody: {
+  // Wager challenge — WagerCard rendered inside padding wrapper
+  wagerCardWrap: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-  },
-  wagerChallengeRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    backgroundColor: Colors.bg,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.sm,
-  },
-  wagerChallengeIcon: { fontSize: 20, lineHeight: 28 },
-  wagerChallengeText: { flex: 1 },
-  wagerChallengeLabel: {
-    fontSize: 13,
-    color: Colors.text,
-    fontWeight: '600',
-    lineHeight: 20,
-  },
-  wagerChallengeName: { fontWeight: '700' },
-  wagerChallengeAmount: {
-    fontSize: 12,
-    color: Colors.muted,
-    fontWeight: '600',
-  },
-  wagerChallengeCaption: {
-    fontSize: 12,
-    color: Colors.dim,
-    fontStyle: 'italic',
-    marginTop: 4,
-    lineHeight: 18,
-  },
-
-  // Accept / Decline action row
-  wagerActionsRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    marginTop: Spacing.sm,
-  },
-  wagerActionBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  wagerAcceptBtn: {
-    backgroundColor: 'rgba(34,197,94,0.12)',
-    borderColor: Colors.win,
-  },
-  wagerAcceptText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.win,
-    letterSpacing: 0.3,
-  },
-  wagerDeclineBtn: {
-    backgroundColor: 'rgba(239,68,68,0.08)',
-    borderColor: Colors.loss,
-  },
-  wagerDeclineText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.loss,
-    letterSpacing: 0.3,
   },
 
   // Wager result
